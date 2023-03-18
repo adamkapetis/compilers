@@ -34,8 +34,9 @@ D [0-9]
 W [ \t\r\n]
 HEX [0-9a-fA-F]{2}
 COMMON [^'"\\]
-
+DOLLAR [^\$]
 %option noyywrap
+%x IN_COMMENT
 %%
 
 "and"     { return T_and; }
@@ -64,7 +65,14 @@ COMMON [^'"\\]
 [\(\)\{\}\[\]\,\;\:|(\<\-)]                                { return T_divider;}
 [\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
 \n                                                         { ++linenumber;}
-$$[(.*)(.*\n)]+$$                                          { /*nothing*/}
+<INITIAL>{
+"$$"              BEGIN(IN_COMMENT);
+}
+<IN_COMMENT>{
+"$$"      BEGIN(INITIAL);
+[^$\n]+   
+\n        linenumber++;
+}
 \$.*\n                                                     { ++linenumber;}
 {W}+                                                       { /* nothing */ }
 
