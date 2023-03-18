@@ -49,16 +49,15 @@ A [\\x[a-zA-Z0-9]{2}]
 "nothing" { return T_nothing; }
 "or"      { return T_or; }
 "ref"     { return T_ref; }
-"return " { return T_return; }
+"return" { return T_return; }
 "then"    { return T_then; }
 "var"     { return T_var; }
 "while"   { return T_while;}
 
-
-{L}[{L}{D}\_]*                                             { return T_id; }
+{L}({L}|{D}|\_)*                                           { return T_id; }
 {D}+                                                       { return T_int_const; }
-\'[{L}{D}{A}\n\r\t\0\\\'\"]\'                              { return T_char_const; }
-\"[{L}{D}{A}\n\r\t\0\\\'\"]+\"                             { return T_string_const;}
+\'({L}|{D}|{A}|\\n|\\r|\\t|\\0|\\|\\'|\\\")\'              { return T_char_const; }
+\"({L}{D}{A}\n\r\t\0\\\'\")+\"                             { return T_string_const;}
 [\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
     [\(\)\[\]\{\}\,\;\:(<\-)]                              { return T_divider; }
 \n                                                         { ++linenumber;}
