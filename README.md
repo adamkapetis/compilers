@@ -8,13 +8,4 @@ Command to run lexer on a test2 program:
 
 
 
-\$\$({DOLLAR}*|{DOLLAR}*\n)+\$\$                        { /*nothing*/}
-<INITIAL>{
-"/*"              BEGIN(IN_COMMENT);
-}
-<IN_COMMENT>{
-"*/"      BEGIN(INITIAL);
-[^*\n]+   // eat comment in chunks
-"*"       // eat the lone star
-\n        yylineno++;
-}
+
