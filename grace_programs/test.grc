@@ -1,4 +1,7 @@
 or and char div do else fun if int mod not nothing or ref return then var while
-hello world 
-512345678
-'A' '1'  '\n' '\t' '\r' '\0' '\' '\'' '\"' '\xa5' 
+hello world AND
+512345678 0020
+'A' '1'  '\n' '\t' '\r' '\0' '\\' '\'' '\"' '\xa5' 
+"Name:\t\”DouglasAdams\”\nValue:\t42\n"
++ - % * = # < <= >=
+( )[ ] { } , ; : <-

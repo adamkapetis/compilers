@@ -33,6 +33,7 @@ L [a-zA-Z]
 D [0-9]
 W [ \t\r\n]
 HEX [0-9a-fA-F]{2}
+COMMON [^'"\\]
 
 %option noyywrap
 %%
@@ -57,10 +58,10 @@ HEX [0-9a-fA-F]{2}
 
 {L}({L}|{D}|\_)*                                           { return T_id; }
 {D}+                                                       { return T_int_const; }
-\'({L}|{D}|\\x{HEX}|\\n|\\r|\\t|\\0|\\|\\'|\\\")\'         { return T_char_const; }
-\"({L}{D}{HEX}\n\r\t\0\\\'\")+\"                           { return T_string_const;}
+\'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      { return T_char_const; } 
+\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { return T_string_const;}
+[\(\)\{\}\[\]\,\;\:|(<\-)]                                 { return T_divider;}
 [\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
-    [\(\)\[\]\{\}\,\;\:(<\-)]                              { return T_divider; }
 \n                                                         { ++linenumber;}
 $$[(.*)(.*\n)]+$$                                          { /*nothing*/}
 \$.*\n                                                     { ++linenumber;}
