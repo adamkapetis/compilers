@@ -32,8 +32,9 @@ int linenumber=1;
 L [a-zA-Z]
 D [0-9]
 W [ \t\r\n]
-A [\\x[a-zA-Z0-9]{2}]
+HEX [0-9a-fA-F]{2}
 
+%option noyywrap
 %%
 
 "and"     { return T_and; }
@@ -56,8 +57,8 @@ A [\\x[a-zA-Z0-9]{2}]
 
 {L}({L}|{D}|\_)*                                           { return T_id; }
 {D}+                                                       { return T_int_const; }
-\'({L}|{D}|{A}|\\n|\\r|\\t|\\0|\\|\\'|\\\")\'              { return T_char_const; }
-\"({L}{D}{A}\n\r\t\0\\\'\")+\"                             { return T_string_const;}
+\'({L}|{D}|\\x{HEX}|\\n|\\r|\\t|\\0|\\|\\'|\\\")\'         { return T_char_const; }
+\"({L}{D}{HEX}\n\r\t\0\\\'\")+\"                           { return T_string_const;}
 [\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
     [\(\)\[\]\{\}\,\;\:(<\-)]                              { return T_divider; }
 \n                                                         { ++linenumber;}
