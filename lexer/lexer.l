@@ -60,7 +60,8 @@ COMMON [^'"\\]
 {D}+                                                       { return T_int_const; }
 \'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      { return T_char_const; } 
 \"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { return T_string_const;}
-[\(\)\{\}\[\]\,\;\:|(<\-)]                                 { return T_divider;}
+\<\-                                                       { return T_divider;}
+[\(\)\{\}\[\]\,\;\:|(\<\-)]                                { return T_divider;}
 [\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
 \n                                                         { ++linenumber;}
 $$[(.*)(.*\n)]+$$                                          { /*nothing*/}
