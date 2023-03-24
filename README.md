@@ -5,7 +5,7 @@ Command to create the lexer executable:
 gcc -o lexer lexer.c 
 Command to run lexer on a test2 program:
 ./lexer < ../grace_programs/test2.grc
-
+bison
 
 
 
