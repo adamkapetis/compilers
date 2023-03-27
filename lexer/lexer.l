@@ -63,7 +63,9 @@ DOLLAR [^\$]
 \"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { return T_string_const;}
 \<\-                                                       { return T_divider;}
 [\(\)\{\}\[\]\,\;\:|(\<\-)]                                { return T_divider;}
-[\+\-/%*=\#\<\(<=)(>=)]                                    { return T_operator; }
+\<\=                                                       { return T_operator; }
+>=                                                         { return T_operator; }
+[\+\-/%*=\#\<]                                            { return T_operator; }
 \n                                                         { ++linenumber;}
 <INITIAL>{
 "$$"              BEGIN(IN_COMMENT);
