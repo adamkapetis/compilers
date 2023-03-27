@@ -36,28 +36,28 @@
 %%
 
 program: 
-    func-def
+    func_def
 ;
 ld: /*nothing*/
-|   local-def ld
+|   local_def ld
 ;
-func-def:
+func_def:
     header ld block
 ;
 fd: /*nothing*/
-|   ';' fpar-def fd
+|   ';' fpar_def fd
 ;
 header:
-    "fun" T_id '(' fpar-def fd ')' ':' ret-type
+    "fun" T_id '(' fpar_def fd ')' ':' ret_type
 ;
 td: /*nothing*/
 |  ',' T_id  td
 ;
-fpar-def:
-    "ref" T_id td ':' fpar-type 
-|   T_id td ':' fpar-type     
+fpar_def:
+    "ref" T_id td ':' fpar_type 
+|   T_id td ':' fpar_type     
 ;
-data-type:
+data_type:
     "int" 
 |   "char"
 ;
@@ -65,35 +65,35 @@ cd: /*nothing*/
 |  '[' T_int_const ']'  cd
 ;
 type: 
-    data-type cd
+    data_type cd
 ;
-ret-type:
-    data-type
+ret_type:
+    data_type
 |   "nothing"
 ;
 fpard: /*nothing*/
 |  '[' T_int_const ']'  fpard
 ;
-fpar-type:
-    data-type '[' ']' fpard 
-|   data-type  fpard
+fpar_type:
+    data_type '[' ']' fpard 
+|   data_type  fpard
 ;
-local-def:
-    func-def 
-|   func-decl
-|   var-def              
+local_def:
+    func_def 
+|   func_decl
+|   var_def              
 ;
-func-decl:
+func_decl:
     header ';'
 ;    
-var-def:
+var_def:
     "var" T_id td ':' type ';' 
 ;
 stmt:
     ';' 
-|   l-value '<-' expr ';' 
+|   l_value "<-" expr ';' 
 |   block
-|   func-call ';'
+|   func_call ';'
 |   "if" cond "then" stmt "else" stmt
 |   "if" cond "then" stmt
 |   "while" cond "do" stmt 
@@ -109,21 +109,21 @@ block:
 exprc: /*nothing*/
 |   ',' expr exprc
 ;
-func-call:
+func_call:
     T_id '(' expr exprc ')'
 |   T_id '(' ')'    
 ;
-l-value:
+l_value:
     T_id 
 |   T_string_const
-|   l-value '[' expr ']'
+|   l_value '[' expr ']'
 ;
 expr: 
     T_int_const 
 |   T_char_const 
-|   l-value
+|   l_value
 |   '(' expr ')' 
-|   func-call
+|   func_call
 |   '+' expr 
 |   '-' expr
 | expr '+' expr
@@ -141,8 +141,8 @@ cond:
 |   expr '#' expr
 |   expr '<' expr
 |   expr '>' expr
-|   expr '<=' expr   
-|   expr '>=' expr             
+|   expr "<=" expr   
+|   expr ">=" expr             
 ;
 
 %%
