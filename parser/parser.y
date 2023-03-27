@@ -37,29 +37,46 @@
 
 program: 
     func-def
-;    
+;
+ld: /*nothing*/
+|   local-def ld
+;
 func-def:
-    header (local-def)* block
+    header ld block
+;
+fd: /*nothing*/
+|   ';' fpar-def fd
 ;
 header:
-    "fun" T_id '(' fpar-def (';' fpar-def)* ')' ':' ret-type
+    "fun" T_id '(' fpar-def fd ')' ':' ret-type
+;
+td: /*nothing*/
+|  ',' T_id  td
 ;
 fpar-def:
-    ["ref"] T_id (',' T_id)* ':' fpar-type 
+    "ref" T_id td ':' fpar-type 
+|   T_id td ':' fpar-type     
 ;
 data-type:
     "int" 
 |   "char"
 ;
+cd: /*nothing*/
+|  '[' T_int_const ']'  cd
+;
 type: 
-    data-type ('[' T_int_const ']')*
+    data-type cd
 ;
 ret-type:
     data-type
 |   "nothing"
 ;
+fpard: /*nothing*/
+|  '[' T_int_const ']'  fpard
+;
 fpar-type:
-    data-type ['[' ']'] ('[' T_int_const ']')   
+    data-type '[' ']' fpard 
+|   data-type  fpard
 ;
 local-def:
     func-def 
@@ -68,23 +85,33 @@ local-def:
 ;
 func-decl:
     header ';'
+;    
 var-def:
-    "var" T_id (',' T_id)* ':' type ';' 
+    "var" T_id td ':' type ';' 
 ;
 stmt:
     ';' 
-|   l-value "<-" expr ';' 
+|   l-value '<-' expr ';' 
 |   block
 |   func-call ';'
-|   "if" cond "then" stmt ["else" stmt]
+|   "if" cond "then" stmt "else" stmt
+|   "if" cond "then" stmt
 |   "while" cond "do" stmt 
-|   "return" [expr] ';'
+|   "return" expr ';'
+|   "return" ';'
+;
+stmtd: /*nothing*/
+|   stmt stmtd
 ;
 block: 
-    '{' (stmt)* '}'
+    '{' stmtd '}'
+;
+exprc: /*nothing*/
+|   ',' expr exprc
 ;
 func-call:
-    T_id '(' expr (',' expr)* ')'
+    T_id '(' expr exprc ')'
+|   T_id '(' ')'    
 ;
 l-value:
     T_id 
@@ -97,14 +124,25 @@ expr:
 |   l-value
 |   '(' expr ')' 
 |   func-call
-|   ('+' | '-' expr) 
-|   expr ('+' | '-' | '*' 'div' 'mod') expr 
+|   '+' expr 
+|   '-' expr
+| expr '+' expr
+| expr '-' expr
+| expr '*' expr
+| expr "div" expr
+| expr "mod" expr
 ;
 cond: 
     '(' cond ')'
 |   "not" cond
-|   cond ("and" | "or") cond
-|   expr ('=' | '#' | '<' | '>' | '<=' '>=') expr                      
+|   cond "or" cond
+|   cond "and" cond   
+|   expr '=' expr
+|   expr '#' expr
+|   expr '<' expr
+|   expr '>' expr
+|   expr '<=' expr   
+|   expr '>=' expr             
 ;
 
 %%
