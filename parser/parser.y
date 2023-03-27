@@ -35,7 +35,77 @@
 
 %%
 
-
+program: 
+    func-def
+;    
+func-def:
+    header (local-def)* block
+;
+header:
+    "fun" T_id '(' fpar-def (';' fpar-def)* ')' ':' ret-type
+;
+fpar-def:
+    ["ref"] T_id (',' T_id)* ':' fpar-type 
+;
+data-type:
+    "int" 
+|   "char"
+;
+type: 
+    data-type ('[' T_int_const ']')*
+;
+ret-type:
+    data-type
+|   "nothing"
+;
+fpar-type:
+    data-type ['[' ']'] ('[' T_int_const ']')   
+;
+local-def:
+    func-def 
+|   func-decl
+|   var-def              
+;
+func-decl:
+    header ';'
+var-def:
+    "var" T_id (',' T_id)* ':' type ';' 
+;
+stmt:
+    ';' 
+|   l-value "<-" expr ';' 
+|   block
+|   func-call ';'
+|   "if" cond "then" stmt ["else" stmt]
+|   "while" cond "do" stmt 
+|   "return" [expr] ';'
+;
+block: 
+    '{' (stmt)* '}'
+;
+func-call:
+    T_id '(' expr (',' expr)* ')'
+;
+l-value:
+    T_id 
+|   T_string_const
+|   l-value '[' expr ']'
+;
+expr: 
+    T_int_const 
+|   T_char_const 
+|   l-value
+|   '(' expr ')' 
+|   func-call
+|   ('+' | '-' expr) 
+|   expr ('+' | '-' | '*' 'div' 'mod') expr 
+;
+cond: 
+    '(' cond ')'
+|   "not" cond
+|   cond ("and" | "or") cond
+|   expr ('=' | '#' | '<' | '>' | '<=' '>=') expr                      
+;
 
 %%
 
