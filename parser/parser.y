@@ -153,7 +153,7 @@ void yyerror(const char *msg) {
 }
 
 int main() {
-    int res = yyparser();
+    int res = yyparse();
     if(res == 0) printf("Successful parsing\n");
     return res;
 }
