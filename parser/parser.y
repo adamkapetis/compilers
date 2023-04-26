@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "lexer.h"
 %}
-
+/* %define parse.trace true */
 %token T_eof "eof"
 %token T_and "and"
 %token T_char "char"
@@ -22,9 +22,9 @@
 %token T_then "then"
 %token T_var "var"
 %token T_while "while"
-/* %token T_lesseq "<="
+%token T_lesseq "<="
 %token T_greateq ">="
-%token T_arrow "<-" */
+%token T_arrow "<-"
 
 %token T_int_const 
 %token T_char_const 
@@ -47,19 +47,20 @@ ld: /*nothing*/
 func_def:
     header ld block
 ;
+header:
+    "fun" T_id '(' fd ')' ':' ret_type
+;
 fd: /*nothing*/
 |   ';' fpar_def fd
 |   fpar_def fd
 ;
-header:
-    "fun" T_id '(' fd ')' ':' ret_type
-;
-td: /*nothing*/
-|  ',' T_id  td
-;
+
 fpar_def:
     "ref" T_id td ':' fpar_type 
 |   T_id td ':' fpar_type     
+;
+td: /*nothing*/
+|  ',' T_id  td
 ;
 data_type:
     "int" 
