@@ -65,7 +65,7 @@ DOLLAR [^\$]
 [\(\)\{\}\[\]\,\;\:]                                       { return T_divider;}
 \<\=                                                       { return T_operator; }
 >=                                                         { return T_operator; }
-[\+\-/%*=\#\<]                                            { return T_operator; }
+[\+\-/%*=\#\<\>]                                            { return T_operator; }
 \n                                                         { ++linenumber;}
 <INITIAL>{
 "$$"              BEGIN(IN_COMMENT);

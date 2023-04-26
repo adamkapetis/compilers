@@ -3,7 +3,7 @@
 %{
 #include "lexer.h"
 #include "parser.h"
-#define T_eof          0
+// #define T_eof          0
 
 int linenumber=1;
 %}
@@ -45,7 +45,7 @@ DOLLAR [^\$]
 [\(\)\{\}\[\]\,\;\:]                                       { return T_divider;}
 \<\=                                                       { return T_operator; }
 >=                                                         { return T_operator; }
-[\+\-/%*=\#\<]                                            { return T_operator; }
+[\+\-/%*=\#\<\>]                                            { return T_operator; }
 \n                                                         { ++linenumber;}
 <INITIAL>{
 "$$"              BEGIN(IN_COMMENT);
