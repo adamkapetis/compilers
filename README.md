@@ -9,4 +9,3 @@ Command to run lexer on a test2 program:
 
 
 
-gerasimos
