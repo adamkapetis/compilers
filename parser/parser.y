@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lexer.h"
-%}
 
+%}
+%define parse.error detailed
+%define parse.trace
 %token T_eof "eof"
 %token T_and "and"
 %token T_char "char"
@@ -31,7 +33,7 @@
 %token T_id 
 %token T_string_const 
 %token T_divider 
-%token T_operator   
+%token T_operator  
 
 %left '+' '-'
 %left '*' '/' '%'
@@ -49,9 +51,10 @@ func_def:
 ;
 fd: /*nothing*/
 |   ';' fpar_def fd
+|   fpar_def fd
 ;
 header:
-    "fun" T_id '(' fpar_def fd ')' ':' ret_type
+    "fun" T_id '(' fd ')' ':' ret_type
 ;
 td: /*nothing*/
 |  ',' T_id  td
