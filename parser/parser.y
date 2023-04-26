@@ -22,9 +22,9 @@
 %token T_then "then"
 %token T_var "var"
 %token T_while "while"
-%token T_lesseq "<="
+/* %token T_lesseq "<="
 %token T_greateq ">="
-%token T_arrow "<-"
+%token T_arrow "<-" */
 
 %token T_int_const 
 %token T_char_const 
@@ -49,9 +49,10 @@ func_def:
 ;
 fd: /*nothing*/
 |   ';' fpar_def fd
+|   fpar_def fd
 ;
 header:
-    "fun" T_id '(' fpar_def fd ')' ':' ret_type
+    "fun" T_id '(' fd ')' ':' ret_type
 ;
 td: /*nothing*/
 |  ',' T_id  td
@@ -156,6 +157,9 @@ void yyerror(const char *msg) {
 }
 
 int main() {
+    #ifdef YYDEBUG
+    yydebug = 1;
+    #endif
     int res = yyparse();
     if(res == 0) printf("Successful parsing\n");
     return res;

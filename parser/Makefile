@@ -11,7 +11,7 @@ lexer.c: lexer.l
 lexer.o: lexer.c lexer.h parser.h
 
 parser.h parser.c: parser.y
-	bison -dv  -o parser.c parser.y
+	bison -dv --debug -o parser.c parser.y
 
 parser.o: parser.c lexer.h
 
