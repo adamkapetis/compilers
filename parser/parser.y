@@ -22,6 +22,9 @@
 %token T_then "then"
 %token T_var "var"
 %token T_while "while"
+%token T_lesseq "<="
+%token T_greateq ">="
+%token T_arrow "<-"
 
 %token T_int_const 
 %token T_char_const 
