@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "lexer.h"
 %}
-
+/* %define parse.trace true */
 %token T_eof "eof"
 %token T_and "and"
 %token T_char "char"
@@ -47,18 +47,20 @@ ld: /*nothing*/
 func_def:
     header ld block
 ;
+header:
+    "fun" T_id '(' fd ')' ':' ret_type
+;
 fd: /*nothing*/
 |   ';' fpar_def fd
+|   fpar_def fd
 ;
-header:
-    "fun" T_id '(' fpar_def fd ')' ':' ret_type
-;
-td: /*nothing*/
-|  ',' T_id  td
-;
+
 fpar_def:
     "ref" T_id td ':' fpar_type 
 |   T_id td ':' fpar_type     
+;
+td: /*nothing*/
+|  ',' T_id  td
 ;
 data_type:
     "int" 
@@ -156,6 +158,9 @@ void yyerror(const char *msg) {
 }
 
 int main() {
+    #ifdef YYDEBUG
+    yydebug = 1;
+    #endif
     int res = yyparse();
     if(res == 0) printf("Successful parsing\n");
     return res;
