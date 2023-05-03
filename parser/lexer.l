@@ -1,9 +1,9 @@
 %option noyywrap
 
 %{
-#include "lexer.h"
-#include "parser.h"
+#include "parser.hpp"
 #include "ast.hpp"
+#include "lexer.hpp"
 // #define T_eof          0
 
 int linenumber=1;

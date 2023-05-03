@@ -10,7 +10,7 @@ lexer.c: lexer.l
 
 lexer.o: lexer.cpp lexer.hpp parser.hpp
 
-parser.h parser.c: parser.y
+parser.hpp parser.cpp: parser.y
 	bison -dv --debug -o parser.cpp parser.y
 
 parser.o: parser.cpp lexer.hpp
