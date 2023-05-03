@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <string>
 
 extern std::map<char, int> globals;
 

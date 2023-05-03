@@ -38,15 +38,15 @@ DOLLAR [^\$]
 "var"     { return T_var; }
 "while"   { return T_while;}
 
-{L}({L}|{D}|\_)*                                           { return T_id; }
-{D}+                                                       { return T_int_const; }
-\'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      { return T_char_const; } 
-\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { return T_string_const;}
-\<\-                                                       { return T_arrow;}
-[\(\)\{\}\[\]\,\;\:]                                       { return yytext[0];}
-\<\=                                                       { return T_lesseq; }
->=                                                         { return T_greateq; }
-[\+\-/%*=\#\<\>]                                            { return yytext[0]; }
+{L}({L}|{D}|\_)*                                           { yylval.id = yytext; return T_id; }
+{D}+                                                       { yylval.num = atoi(yytext); return T_int_const; }
+\'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      { yylval.var = yytext[0]; return T_char_const; } 
+\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { yylval.str = yytext; return T_string_const;}
+\<\-                                                       { yylval.div_s = yytext; return T_arrow;}
+[\(\)\{\}\[\]\,\;\:]                                       { yylval.div = yytext[0]; return yytext[0];}
+\<\=                                                       { yylval.op_s = yytext; return T_lesseq; }
+>=                                                         { yylval.op_s = yytext; return T_greateq; }
+[\+\-/%*=\#\<\>]                                           { yylval.op = yytext[0]; return yytext[0]; }
 \n                                                         { ++linenumber;}
 <INITIAL>{
 "$$"              BEGIN(IN_COMMENT);

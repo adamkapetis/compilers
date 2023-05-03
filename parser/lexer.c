@@ -915,27 +915,27 @@ YY_RULE_SETUP
 case 22:
 YY_RULE_SETUP
 #line 45 "lexer.l"
-{ return T_arrow;}
+{ yylval.div_s = T_arrow; return T_arrow;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 46 "lexer.l"
-{ return yytext[0];}
+{ yylval.div = yytext[0]; return yytext[0];}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 47 "lexer.l"
-{ return T_lesseq; }
+{ yylval.op_s = T_lesseq; return T_lesseq; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 48 "lexer.l"
-{ return T_greateq; }
+{ yylval.op_s = T_greateq; return T_greateq; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 49 "lexer.l"
-{ return yytext[0]; }
+{ yylval.op = yytext[0]; return yytext[0]; }
 	YY_BREAK
 case 27:
 /* rule 27 can match eol */

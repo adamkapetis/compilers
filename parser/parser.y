@@ -1,5 +1,6 @@
 %{
 #include <cstdio>
+#include <string>
 #include <cstdlib>
 #include "lexer.hpp"
 #include "ast.hpp"
@@ -37,6 +38,19 @@
 
 %left '+' '-'
 %left '*' '/' '%'
+
+%union {
+  Stmt *stmt;
+  Expr *expr;
+  Block *blk;
+  char var;
+  int num;
+  char op;
+  char* op_s;
+  char* div_s;
+  char* str;
+  char* id;
+}
 
 %%
 
