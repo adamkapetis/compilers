@@ -1,25 +1,25 @@
 .PHONY: clean distclean default
 
-CC=gcc
+CC=g++
 CFLAGS=-Wall
 
 default: gracecomp
 
 lexer.c: lexer.l
-	flex -s -o lexer.c lexer.l
+	flex -s -o lexer.cpp lexer.l
 
-lexer.o: lexer.c lexer.h parser.h
+lexer.o: lexer.cpp lexer.hpp parser.hpp
 
 parser.h parser.c: parser.y
-	bison -dv --debug -o parser.c parser.y
+	bison -dv --debug -o parser.cpp parser.y
 
-parser.o: parser.c lexer.h
+parser.o: parser.cpp lexer.hpp
 
 gracecomp: lexer.o parser.o
 	$(CC) $(CFLAGS) -o gracecomp lexer.o parser.o
 
 clean:
-	$(RM) lexer.c parser.c parser.h parser.output *.o
+	$(RM) lexer.cpp parser.cpp parser.hpp parser.output *.o
 
 distclean: clean
-	$(RM) mbc
+	$(RM) gracecomp
