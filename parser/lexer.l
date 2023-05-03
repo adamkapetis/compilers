@@ -3,6 +3,7 @@
 %{
 #include "lexer.h"
 #include "parser.h"
+#include "ast.hpp"
 // #define T_eof          0
 
 int linenumber=1;
