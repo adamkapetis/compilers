@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "lexer.hpp"
 #include "ast.hpp"
+#define YYDEBUG 1
 %}
 /* %define parse.trace true */
 %token T_eof "eof"
@@ -159,9 +160,9 @@ void yyerror(const char *msg) {
 }
 
 int main() {
-    #ifdef YYDEBUG
+    /* #ifdef YYDEBUG
     yydebug = 1;
-    #endif
+    #endif */
     int res = yyparse();
     if(res == 0) printf("Successful parsing\n");
     return res;

@@ -134,6 +134,7 @@
 #include <cstdlib>
 #include "lexer.hpp"
 #include "ast.hpp"
+#define YYDEBUG 1
 
 
 /* Enabling traces.  */
@@ -167,7 +168,7 @@ typedef int YYSTYPE;
 
 
 /* Line 216 of yacc.c.  */
-#line 171 "y.tab.c"
+#line 172 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -481,14 +482,14 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    43,    43,    45,    46,    49,    52,    54,    55,    56,
-      60,    61,    63,    64,    67,    68,    70,    71,    74,    77,
-      78,    80,    81,    84,    85,    88,    89,    90,    93,    96,
-      99,   100,   101,   102,   103,   104,   105,   106,   107,   109,
-     110,   113,   115,   116,   119,   120,   123,   124,   125,   128,
-     129,   130,   131,   132,   133,   134,   135,   136,   137,   138,
-     139,   142,   143,   144,   145,   146,   147,   148,   149,   150,
-     151
+       0,    44,    44,    46,    47,    50,    53,    55,    56,    57,
+      61,    62,    64,    65,    68,    69,    71,    72,    75,    78,
+      79,    81,    82,    85,    86,    89,    90,    91,    94,    97,
+     100,   101,   102,   103,   104,   105,   106,   107,   108,   110,
+     111,   114,   116,   117,   120,   121,   124,   125,   126,   129,
+     130,   131,   132,   133,   134,   135,   136,   137,   138,   139,
+     140,   143,   144,   145,   146,   147,   148,   149,   150,   151,
+     152
 };
 #endif
 
@@ -1501,7 +1502,7 @@ yyreduce:
     {
       
 /* Line 1267 of yacc.c.  */
-#line 1505 "y.tab.c"
+#line 1506 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1715,7 +1716,7 @@ yyreturn:
 }
 
 
-#line 154 "parser.y"
+#line 155 "parser.y"
 
 
 void yyerror(const char *msg) {
@@ -1724,9 +1725,9 @@ void yyerror(const char *msg) {
 }
 
 int main() {
-    #ifdef YYDEBUG
+    /* #ifdef YYDEBUG
     yydebug = 1;
-    #endif
+    #endif */
     int res = yyparse();
     if(res == 0) printf("Successful parsing\n");
     return res;
