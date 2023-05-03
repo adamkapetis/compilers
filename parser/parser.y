@@ -44,6 +44,9 @@
   Expr *expr;
   Cond *cond;
   Block *blk;
+  L_value* l_value;
+  Func_call* func_call;
+  Exprc* exprc;
   char var;
   int num;
   char op;
@@ -52,9 +55,14 @@
   char* str;
   char* id;
 }
+%type <exprc> exprc
+%type <func_call> func_call
 %type <expr> expr
 %type <cond> cond
 %type <l_value> l_value
+%type <blk> stmtd
+%type <blk> block
+%type <stmt> stmt
 
 %%
 
@@ -117,7 +125,7 @@ var_def:
 stmt:
     ';' 
 |   l_value "<-" expr ';' 
-|   block
+|   block                   {$$=$1}
 |   func_call ';'
 |   "if" cond "then" stmt "else" stmt
 |   "if" cond "then" stmt
@@ -125,24 +133,26 @@ stmt:
 |   "return" expr ';'
 |   "return" ';'
 ;
-stmtd: /*nothing*/
-|   stmt stmtd
+stmtd: /*nothing*/          {$$ = new Block()}
+|   stmtd stmt              {$1->append($2); $$=$1;}
 ;
 block: 
-    '{' stmtd '}'
+    '{' stmtd '}'           {$$=$2}
 ;
-exprc: /*nothing*/
-|   ',' expr exprc
+exprc: /*nothing*/      
+    expr                    {$$ = new Exprc($1);}
+|   exprc ',' expr          {$1->append($3); $$ = $1;}
 ;
 func_call:
-    T_id '(' expr exprc ')'
-|   T_id '(' ')'    
+    T_id '(' exprc ')' {$$ = new Func_call($1,$3);}
+|   T_id '(' ')'            {$$ = new Func_call($1);}
 ;
 l_value:
     T_id                { $$ = new Id($1); }
 |   T_string_const      { $$ = new String_const($1); }
 |   l_value '[' expr ']'{ $$ = new L_value($1, $3); } 
 ;
+
 expr: 
     T_int_const         { $$ = new Int_const($1); }
 |   T_char_const        { $$ = new Char_const($1); }
