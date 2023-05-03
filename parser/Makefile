@@ -5,7 +5,7 @@ CFLAGS=-Wall
 
 default: gracecomp
 
-lexer.c: lexer.l
+lexer.cpp: lexer.l
 	flex -s -o lexer.cpp lexer.l
 
 lexer.o: lexer.cpp lexer.hpp parser.hpp
