@@ -42,6 +42,7 @@
 %union {
   Stmt *stmt;
   Expr *expr;
+  Cond *cond;
   Block *blk;
   char var;
   int num;
@@ -51,14 +52,17 @@
   char* str;
   char* id;
 }
+%type <expr> expr
+%type <cond> cond
+%type <l_value> l_value
 
 %%
 
 program: 
-    func_def
+    func_def	 { $1->execute(); }
 ;
 ld: /*nothing*/
-|   local_def ld
+|   local_def ld 
 ;
 func_def:
     header ld block
@@ -135,35 +139,35 @@ func_call:
 |   T_id '(' ')'    
 ;
 l_value:
-    T_id 
-|   T_string_const
-|   l_value '[' expr ']'
+    T_id                { $$ = new Id($1); }
+|   T_string_const      { $$ = new String_const($1); }
+|   l_value '[' expr ']'{ $$ = new L_value($1, $3); } 
 ;
 expr: 
-    T_int_const 
-|   T_char_const 
-|   l_value
-|   '(' expr ')' 
-|   func_call
-|   '+' expr 
-|   '-' expr
-| expr '+' expr
-| expr '-' expr
-| expr '*' expr
-| expr "div" expr
-| expr "mod" expr
+    T_int_const         { $$ = new Int_const($1); }
+|   T_char_const        { $$ = new Char_const($1); }
+|   l_value             { $$ = $1; }
+|   '(' expr ')'        { $$ = $2; }
+|   func_call           { $$ = $1; }
+|   '+' expr            { $$ = new BinOp($1, $2); }
+|   '-' expr            { $$ = new BinOp($1, $2); }
+| expr '+' expr         { $$ = new BinOp($1, $2, $3); }
+| expr '-' expr         { $$ = new BinOp($1, $2, $3); }
+| expr '*' expr         { $$ = new BinOp($1, $2, $3); }
+| expr "div" expr       { $$ = new BinOp($1, $2, $3); }
+| expr "mod" expr       { $$ = new BinOp($1, $2, $3); }
 ;
 cond: 
-    '(' cond ')'
-|   "not" cond
-|   cond "or" cond
-|   cond "and" cond   
-|   expr '=' expr
-|   expr '#' expr
-|   expr '<' expr
-|   expr '>' expr
-|   expr "<=" expr   
-|   expr ">=" expr             
+    '(' cond ')'        { $$ = $2; }
+|   "not" cond          { $$ = new LogOp($1, $2); }
+|   cond "or" cond      { $$ = new LogOp($1, $2, $3); }  
+|   cond "and" cond     { $$ = new LogOp($1, $2, $3); } 
+|   expr '=' expr       { $$ = new ComOp($1, $2, $3); } 
+|   expr '#' expr       { $$ = new ComOp($1, $2, $3); } 
+|   expr '<' expr       { $$ = new ComOp($1, $2, $3); } 
+|   expr '>' expr       { $$ = new ComOp($1, $2, $3); } 
+|   expr "<=" expr      { $$ = new ComOp($1, $2, $3); } 
+|   expr ">=" expr      { $$ = new ComOp($1, $2, $3); }        
 ;
 
 %%
