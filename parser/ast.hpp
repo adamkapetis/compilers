@@ -7,15 +7,72 @@
 #include <map>
 #include <string>
 
-enum logics { not , or ,  and};
 
 class AST {
-
+  public: 
+    virtual void printAST(std::ostream &out) const = 0;
 };
 
 class Expr : public AST {
  public:
   virtual int eval() const = 0;
+};
+
+class Stmt : public AST {
+
+};
+
+class Block : public Stmt {
+ public:
+  Block() : stmt_list() {}
+  void append(Stmt *s) { 
+    stmt_list.push_back(s); 
+  }
+  void printAST(std::ostream &out) const override {
+    out << "Block(";
+    bool first = true;
+    for (const auto &s : stmt_list) {
+      if (!first) out << ", ";
+      first = false;
+      out << *s;
+    }
+    out << ")";
+  }
+ private:
+  std::vector<Stmt *> stmt_list;
+};
+
+class Exprc : public AST {
+  public: 
+    Exprc(Expr* exp) { 
+      exprc.push_back(exp) ;
+    }
+    void append(Expr* expr) {
+      exprc.push_back(expr);
+    }
+    void printAST(std::ostream &out) const override {
+      out << "parameters(";
+    bool first = true;
+    for (const auto &s : exprc) {
+      if (!first) out << ", ";
+      first = false;
+      out << *s;
+    }
+    out << ")"; 
+    }
+  private:
+    std::vector<Expr *> exprc;
+};
+
+class Func_call : public Stmt {
+  public:
+    Func_call(Id* id, Exprc* exp = nullptr) : Tid(id), exprc(exp){}
+    void printAST(std::ostream &out) const override {
+      out << *Tid << "(" << *exprc << ")"; 
+    }
+  private:
+    Id* Tid;
+    Exprc* exprc;
 };
 
 class L_value : public {
@@ -88,12 +145,12 @@ class Cond {
 
 class LogOp : public Cond {
   public: 
-    LogOp(Cond* left = nullptr, logics o = 1 , Cond* right=nullptr): condl(left), op(o), condr(right){} 
+    LogOp(Cond* left = nullptr, char* o = "not" , Cond* right=nullptr): condl(left), op(o), condr(right){} 
     void printAST(std::ostream &out) const override {
       if(condl == nullptr){
         out << " not (" << *condr << ")";
       }
-      else if (op == 1){
+      else if (op == "or"){
         out << "(" << *condl << " or " << *condr << ")";
       }
       else { 
@@ -102,7 +159,7 @@ class LogOp : public Cond {
     }
   private:
     Cond* condl;
-    logics op;
+    char* op;
     Cond* condr;
 };
 
