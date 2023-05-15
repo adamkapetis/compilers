@@ -66,12 +66,12 @@ class Exprc : public AST {
 
 class Func_call : public Stmt {
   public:
-    Func_call(char * id, Exprc* exp = nullptr) : Tid(id), exprc(exp){}
+    Func_call(Id* id, Exprc* exp = nullptr) : Tid(id), exprc(exp){}
     void printAST(std::ostream &out) const override {
-      out << Tid << "(" << *exprc << ")"; 
+      out << *Tid << "(" << *exprc << ")"; 
     }
   private:
-    char* Tid;
+    Id* Tid;
     Exprc* exprc;
 };
 

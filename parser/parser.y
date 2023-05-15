@@ -6,6 +6,39 @@
 #include "ast.hpp"
 #define YYDEBUG 1
 %}
+/* %define parse.trace true */
+%token T_eof "eof"
+%token T_and "and"
+%token T_char "char"
+%token T_div "div"
+%token T_do "do"
+%token T_else "else"
+%token T_fun "fun"
+%token T_if "if"
+%token T_int "int"
+%token T_mod "mod"
+%token T_not "not"
+%token T_nothing "nothing"
+%token T_or "or"
+%token T_ref "ref"
+%token T_return "return"
+%token T_then "then"
+%token T_var "var"
+%token T_while "while"
+%token T_lesseq "<="
+%token T_greateq ">="
+%token T_arrow "<-"
+
+%token T_int_const 
+%token T_char_const 
+%token T_id 
+%token T_string_const 
+%token T_divider 
+%token T_operator   
+
+%left '+' '-'
+%left '*' '/' '%'
+
 %union {
   Stmt *stmt;
   Expr *expr;
@@ -22,40 +55,6 @@
   char* str;
   char* id;
 }
-
-/* %define parse.trace true */
-%token T_eof "eof"
-%token<op_s> T_and "and"
-%token T_char "char"
-%token<op_s> T_div "div"
-%token T_do "do"
-%token T_else "else"
-%token T_fun "fun"
-%token T_if "if"
-%token T_int "int"
-%token<op_s> T_mod "mod"
-%token<op_s> T_not "not"
-%token T_nothing "nothing"
-%token<op_s> T_or "or"
-%token T_ref "ref"
-%token T_return "return"
-%token T_then "then"
-%token T_var "var"
-%token T_while "while"
-%token T_lesseq "<="
-%token T_greateq ">="
-%token T_arrow "<-"
-
-%token<num> T_int_const 
-%token<var> T_char_const 
-%token<id> T_id 
-%token<str> T_string_const 
-%token T_divider 
-%token T_operator   
-
-%left<op> '+' '-'
-%left<op> '*' '/' '%'
-
 %type <exprc> exprc
 %type <func_call> func_call
 %type <expr> expr
@@ -68,7 +67,7 @@
 %%
 
 program: 
-    func_def	 {  }
+    func_def	 { $1->execute(); }
 ;
 ld: /*nothing*/
 |   local_def ld 
@@ -145,7 +144,7 @@ exprc: /*nothing*/
 |   exprc ',' expr          {$1->append($3); $$ = $1;}
 ;
 func_call:
-    T_id '(' exprc ')'      {$$ = new Func_call($1,$3);}
+    T_id '(' exprc ')' {$$ = new Func_call($1,$3);}
 |   T_id '(' ')'            {$$ = new Func_call($1);}
 ;
 l_value:
@@ -184,7 +183,7 @@ cond:
 %%
 
 void yyerror(const char *msg) {
-    printf("Syntax error:%s at line: %d\n",msg, linenumber);
+    printf("Syntax error:%s\n",msg);
     exit(42);
 }
 
