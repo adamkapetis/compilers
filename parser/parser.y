@@ -42,12 +42,17 @@
 
 
 %union {
+    Fpar_def* fpar_def;
+    Header * header;
+    Func_def * func_def;
+    Var_def* var_def;
+    Local_def * local_def;
+    Def_list* deflist;
     Type* Type;
     Id_list * id_list;
     Dims *dlist;
     dtype dtype;
     If_then_else* if_then_else;
-    Var_def* var_def;
     Stmt *stmt;
     Expr *expr;
     Cond *cond;
@@ -55,6 +60,7 @@
     L_value* l_value;
     Func_call* func_call;
     Exprc* exprc;
+    Id * Id;
     char var;
     int num;
     char op;
@@ -63,6 +69,12 @@
     char* str;
     char* id;
 }
+%type <fpar_def> fpar_def
+%type <header> header
+%type <Type> fpar_type
+%type <dtype> ret_type
+%type <local_def> local_def
+%type <deflist> ld
 %type <Type> type
 %type <id_list> td
 %type <dlist> cd
@@ -82,14 +94,14 @@
 program: 
     func_def	 { $1->execute(); }
 ;
-ld: /*nothing*/
-|   local_def ld 
+ld: /*nothing*/                     {$$=new Def_list();}
+|   local_def ld                    {$2->append($1);$$=$2;}
 ;
-func_def:
-    header ld block
+func_def:                           
+    header ld block                 {}
 ;
 header:
-    "fun" T_id '(' fd ')' ':' ret_type
+    "fun" T_id '(' fd ')' ':' ret_type  {$$= new Header(new Id($2),$4,$7);}
 ;
 fd: /*nothing*/
 |   ';' fpar_def fd
@@ -97,11 +109,11 @@ fd: /*nothing*/
 ;
 
 fpar_def:
-    "ref" T_id td ':' fpar_type 
-|   T_id td ':' fpar_type     
+    "ref" T_id td ':' fpar_type     {$3->append($2);$$=new Fpar_def($3,$4,true);}
+|   T_id td ':' fpar_type           {$2->append($1);$$=new Fpar_def($3,$4);}
 ;
 td: /*nothing*/                     {$$=new Id_list();}
-|  ',' T_id  td                     {$3->append($2);$$=$3;}
+|  ',' T_id  td                     {$3->append(new Id($2));$$=$3;}
 ;
 data_type:                          
     "int"                           {$$=0;}
@@ -113,31 +125,27 @@ cd: /*nothing*/                     {$$ = new Dims();}
 type: 
     data_type cd                    {$$ = new Type($1,$2);}
 ;
-ret_type:
-    data_type
-|   "nothing"
+ret_type:                           
+    data_type                       {$$=$1;}
+|   "nothing"                       {$$=2;}
 ;
-fpard: /*nothing*/
-|  '[' T_int_const ']'  fpard
-;
+
 fpar_type:
-    data_type '[' ']' fpard 
-|   data_type  fpard
+    data_type '[' ']' cd            {$3->append(new Int_const(0));$$ = new Type($1,$3);}
+|   data_type  cd                   {$3->append(new Int_const(0));$$ = new Type($1,$2);}
 ;
 local_def:
-    func_def 
-|   func_decl
-|   var_def              
+    func_def                                {$$=$1}
+|   header ';'                              {$$=$1}
+|   var_def                                 {$$=$1}
 ;
-func_decl:
-    header ';'
-;    
+   
 var_def:
     "var" T_id td ':' type ';'              {$3->append($2);$$=new Var_def($3,$5);}
 ;
 stmt:
     ';' 
-|   l_value "<-" expr ';' 
+|   l_value "<-" expr ';'                   {$$=new }
 |   block                                   {$$=$1;} // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           {$$=$1;}
 |   "if" cond "then" stmt "else" stmt       {$$=new if_then_else($2,$4,$6);}
