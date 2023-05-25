@@ -42,6 +42,9 @@
 
 
 %union {
+    Type* Type;
+    Id_list * id_list;
+    Dims *dlist;
     dtype dtype;
     If_then_else* if_then_else;
     Var_def* var_def;
@@ -60,6 +63,9 @@
     char* str;
     char* id;
 }
+%type <Type> type
+%type <id_list> td
+%type <dlist> cd
 %type <dtype> data_type
 %type <var_def> var_def
 %type <exprc> exprc
@@ -101,11 +107,11 @@ data_type:
     "int"                           {$$=0;}
 |   "char"                          {$$=1;}
 ;           
-cd: /*nothing*/                     
+cd: /*nothing*/                     {$$ = new Dims();}
 |  '[' T_int_const ']'  cd          {$4->append(new Dim($2)); $$=$4;}
 ;
 type: 
-    data_type cd                    {$$ = new Type{$1,$2};}
+    data_type cd                    {$$ = new Type($1,$2);}
 ;
 ret_type:
     data_type
