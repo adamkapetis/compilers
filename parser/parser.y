@@ -39,22 +39,29 @@
 %left '+' '-'
 %left '*' '/' '%'
 
+
+
 %union {
-  Stmt *stmt;
-  Expr *expr;
-  Cond *cond;
-  Block *blk;
-  L_value* l_value;
-  Func_call* func_call;
-  Exprc* exprc;
-  char var;
-  int num;
-  char op;
-  char* op_s;
-  char* div_s;
-  char* str;
-  char* id;
+    dtype dtype;
+    If_then_else* if_then_else;
+    Var_def* var_def;
+    Stmt *stmt;
+    Expr *expr;
+    Cond *cond;
+    Block *blk;
+    L_value* l_value;
+    Func_call* func_call;
+    Exprc* exprc;
+    char var;
+    int num;
+    char op;
+    char* op_s;
+    char* div_s;
+    char* str;
+    char* id;
 }
+%type <dtype> data_type
+%type <var_def> var_def
 %type <exprc> exprc
 %type <func_call> func_call
 %type <expr> expr
@@ -87,18 +94,18 @@ fpar_def:
     "ref" T_id td ':' fpar_type 
 |   T_id td ':' fpar_type     
 ;
-td: /*nothing*/
-|  ',' T_id  td
+td: /*nothing*/                     {$$=new Id_list();}
+|  ',' T_id  td                     {$3->append($2);$$=$3;}
 ;
-data_type:
-    "int" 
-|   "char"
-;
-cd: /*nothing*/
-|  '[' T_int_const ']'  cd
+data_type:                          
+    "int"                           {$$=0;}
+|   "char"                          {$$=1;}
+;           
+cd: /*nothing*/                     
+|  '[' T_int_const ']'  cd          {$4->append(new Dim($2)); $$=$4;}
 ;
 type: 
-    data_type cd
+    data_type cd                    {$$ = new Type{$1,$2};}
 ;
 ret_type:
     data_type
@@ -120,18 +127,18 @@ func_decl:
     header ';'
 ;    
 var_def:
-    "var" T_id td ':' type ';' 
+    "var" T_id td ':' type ';'              {$3->append($2);$$=new Var_def($3,$5);}
 ;
 stmt:
     ';' 
 |   l_value "<-" expr ';' 
-|   block                   {$$=$1}
-|   func_call ';'
-|   "if" cond "then" stmt "else" stmt
-|   "if" cond "then" stmt
-|   "while" cond "do" stmt 
-|   "return" expr ';'
-|   "return" ';'
+|   block                                   {$$=$1;} // kalytera to block sto stmtd kai merge ton 2 block
+|   func_call ';'                           {$$=$1;}
+|   "if" cond "then" stmt "else" stmt       {$$=new if_then_else($2,$4,$6);}
+|   "if" cond "then" stmt                   {$$=new if_then_else($2,$4);}
+|   "while" cond "do" stmt                  {$$=new while_stmt($2,$4);}
+|   "return" expr ';'                       {$$=new return_stmt($2);}
+|   "return" ';'                            {$$=new return_stmt();}    
 ;
 stmtd: /*nothing*/          {$$ = new Block()}
 |   stmtd stmt              {$1->append($2); $$=$1;}
@@ -183,7 +190,7 @@ cond:
 %%
 
 void yyerror(const char *msg) {
-    printf("Syntax error:%s\n",msg);
+    printf("Syntax error:%s at line :%d, token : %s\n",msg,linenumber,yytext);
     exit(42);
 }
 
