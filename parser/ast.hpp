@@ -7,7 +7,7 @@
 #include <map>
 #include <string>
 
-enum dtype { Type_int, Type_bool };
+enum dtype { Type_int, Type_bool, Type_void };
 
 
 class AST {
@@ -27,6 +27,13 @@ class Expr : public AST {
 
 class Stmt : public AST {
 
+};
+class Valuation : public Stmt {
+  public: 
+    Valuation(L_value* val, Expr* exp):expr(exp), var(val){}
+  private: 
+    Expr* expr;
+    L_value* var;
 };
 
 class If_then_else : public Stmt {
@@ -198,14 +205,14 @@ class ComOp : public Cond {
     char* op;
 };
 
-class Dim : public {
+class Dim : public AST {
   public:
     Dim(Int_const* inte):range(inte->eval()){}
   private:
     int range;
 };
 
-class Dims : public {
+class Dims : public AST {
   public:
     Dims(){}
     void append(Dim * dim){
@@ -217,7 +224,7 @@ class Dims : public {
     dtype* type;
 };
 
-class Id_list : public{
+class Id_list : public Local_def{
   public:
     Id_list(){}
     void append(Id* id){
@@ -227,9 +234,73 @@ class Id_list : public{
   std::vector<Id*> Idlist;
 };
 
-class Type : public{
+class Type : public Local_def{
   public: 
-    Type(dtype* typ, Dims* dims)
+    Type(dtype* typ, Dims* dims = nullptr):dtyp(typ),Dims(dims) {}
+  private:
+    dtype* dtyp;
+    Dims* Dims;
 };
+
+class Local_def: public AST{
+  public:
+  private:
+};
+
+class Def_list : public Local_def{
+  public:
+    Def_list(){}
+  private:
+    std::vector<Local_def*> deflist; 
+};
+
+class Local_def : public AST {
+
+};
+
+class Header : public Local_def {
+  public:
+    Header(Id *i, Fpar_list* par_l,dtype * typ):id(i),type(typ),par_list(par_l) {}
+  private:
+    Id* id;
+    dtype* type;
+    Fpar_list* par_list;
+};
+
+class Func_def : public Local_def {
+  public:
+  private:
+};
+
+class Var_def : public Local_def {
+  public:
+  private:
+};
+
+class Fpar_def : public Local_def {
+  public: 
+    Fpar_def(Id_list* list,Type* typ, bool re=false):ref(re), type(typ){}
+  private:
+    Type* type;
+    bool ref;
+};
+
+class Fpar_list : public Local_def {
+  public:
+    Fpar_list(){}
+  private:
+    std::vector<Fpar_def*> par_list;
+};
+
+class Function : public AST {
+  public: 
+    Function(Header* head, Def_list* d_list, Block* bl): header(head), def_list(d_list), block(bl){}
+  private:
+    Header* header;
+    Def_list* def_list;
+    Block* block;
+
+};
+
 
 #endif

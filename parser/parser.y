@@ -42,6 +42,9 @@
 
 
 %union {
+    Valuation* valuation;
+    Function* function;
+    Fpar_list * fpar_list;
     Fpar_def* fpar_def;
     Header * header;
     Func_def * func_def;
@@ -69,6 +72,9 @@
     char* str;
     char* id;
 }
+
+%type <function> func_def
+%type <fpar_list> fd
 %type <fpar_def> fpar_def
 %type <header> header
 %type <Type> fpar_type
@@ -92,20 +98,20 @@
 %%
 
 program: 
-    func_def	 { $1->execute(); }
+    func_def	 { $1->printAST(); }
 ;
 ld: /*nothing*/                     {$$=new Def_list();}
 |   local_def ld                    {$2->append($1);$$=$2;}
 ;
 func_def:                           
-    header ld block                 {}
+    header ld block                 {$$=new Function($1,$2,$3);}
 ;
 header:
     "fun" T_id '(' fd ')' ':' ret_type  {$$= new Header(new Id($2),$4,$7);}
 ;
-fd: /*nothing*/
-|   ';' fpar_def fd
-|   fpar_def fd
+fd: /*nothing*/                     {$$=new Fpar_list();}
+|   ';' fpar_def fd                 {$3->append($2);$$=$3;}
+|   fpar_def fd                     {$2->append($1);$$=$2;}
 ;
 
 fpar_def:
@@ -145,7 +151,7 @@ var_def:
 ;
 stmt:
     ';' 
-|   l_value "<-" expr ';'                   {$$=new }
+|   l_value "<-" expr ';'                   {$$=new Valuation($1,$3);}
 |   block                                   {$$=$1;} // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           {$$=$1;}
 |   "if" cond "then" stmt "else" stmt       {$$=new if_then_else($2,$4,$6);}
