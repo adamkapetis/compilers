@@ -31,6 +31,9 @@ class Stmt : public AST {
 class Valuation : public Stmt {
   public: 
     Valuation(L_value* val, Expr* exp):expr(exp), var(val){}
+    void printAST(std::ostream &out) const override {
+      out << *var << " = " << *expr ;
+    }
   private: 
     Expr* expr;
     L_value* var;
@@ -169,7 +172,24 @@ class BinOp : public Expr {
     char op;
 };
 
-class Cond : public AST{
+// class Cond : public AST{
+//   public:
+//     Cond(Expr * ex1,int op, Expr* ex2 = nullptr ): expr1(ex1),oper(op),expr2(ex2){}
+//     void printAST(std::ostream &out) const override{
+//       if(expr2==nullptr){
+//         out << "not" << *expr1;
+//       }
+//       else {
+//         out << *expr1 << "logop" << *expr2;
+//       }
+//     }
+//   private: 
+//   Expr* expr1;
+//   int oper;
+//   Expr* expr2;
+// };
+
+class Cond : public AST {
 
 };
 
@@ -208,6 +228,9 @@ class ComOp : public Cond {
 class Dim : public AST {
   public:
     Dim(Int_const* inte):range(inte->eval()){}
+    void printAST(std::ostream &out) const override {
+      out<< "[" << range << "]";
+    }
   private:
     int range;
 };
@@ -219,6 +242,11 @@ class Dims : public AST {
       dims.push_back(dim);
     }
     void set_type(dtype *dt) {type=dt;}
+    void printAST(std::ostream &out) const override {
+      for(const auto &s: dims ){
+        out << *s;
+      }
+    }
   private:
     std::vector<Dim *> dims;
     dtype* type;
@@ -230,6 +258,11 @@ class Id_list : public Local_def{
     void append(Id* id){
       Idlist.push_back(id);
     }
+    void printAST(std::ostream &out) const override{
+      for(const auto &s: Idlist){
+        out << *s;
+      }
+    }
   private:
   std::vector<Id*> Idlist;
 };
@@ -237,6 +270,9 @@ class Id_list : public Local_def{
 class Type : public Local_def{
   public: 
     Type(dtype* typ, Dims* dims = nullptr):dtyp(typ),Dims(dims) {}
+    void printAST(std::ostream &out) const override {
+      out << *dtyp << *Dims ;
+    }
   private:
     dtype* dtyp;
     Dims* Dims;
@@ -250,17 +286,25 @@ class Local_def: public AST{
 class Def_list : public Local_def{
   public:
     Def_list(){}
+    void append(Local_def* ld){
+      deflist.push_back(ld);
+    }
+    void printAST(std::ostream &out) const override {
+      for(const auto &s : deflist){
+        out << *s;
+      }
+    }
   private:
     std::vector<Local_def*> deflist; 
 };
 
-class Local_def : public AST {
-
-};
 
 class Header : public Local_def {
   public:
     Header(Id *i, Fpar_list* par_l,dtype * typ):id(i),type(typ),par_list(par_l) {}
+    void printAST(std::ostream &out) const override {
+      out << "fun " << *id << "(" << *par_list << ") :" << *type; 
+    }
   private:
     Id* id;
     dtype* type;
@@ -274,13 +318,25 @@ class Func_def : public Local_def {
 
 class Var_def : public Local_def {
   public:
+    Var_def(Id_list* idl, Type* ty):id_list(idl), type(ty){
+    }
+    void printAST(std::ostream &out) const override {
+      out << "var " << *id_list << "type:" << *type;
+    }
   private:
+    Id_list * id_list;
+    Type* type;
 };
 
 class Fpar_def : public Local_def {
   public: 
-    Fpar_def(Id_list* list,Type* typ, bool re=false):ref(re), type(typ){}
+    Fpar_def(Id_list* list,Type* typ, bool re=false):ref(re), type(typ),idlist(list){}
+    void printAST(std::ostream &out) const override{
+      if(ref==true) out << "ref ";
+      out << *idlist << " : " << *type;
+    }
   private:
+    Id_list* idlist;
     Type* type;
     bool ref;
 };
@@ -288,6 +344,14 @@ class Fpar_def : public Local_def {
 class Fpar_list : public Local_def {
   public:
     Fpar_list(){}
+    void append(Fpar_def* fd){
+      par_list.push_back(fd);
+    }
+    void printAST(std::ostream &out) const override {
+      for ( const auto &s : par_list){
+        out << *s ;
+      }
+    }
   private:
     std::vector<Fpar_def*> par_list;
 };
@@ -295,6 +359,9 @@ class Fpar_list : public Local_def {
 class Function : public AST {
   public: 
     Function(Header* head, Def_list* d_list, Block* bl): header(head), def_list(d_list), block(bl){}
+    void printAST(std::ostream &out) const override {
+      out << *header << std::endl << *def_list << std::endl << *block;
+    }
   private:
     Header* header;
     Def_list* def_list;

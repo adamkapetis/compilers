@@ -196,15 +196,15 @@ expr:
 ;
 cond: 
     '(' cond ')'        { $$ = $2; }
-|   "not" cond          { $$ = new LogOp($1, $2); }
-|   cond "or" cond      { $$ = new LogOp($1, $2, $3); }  
-|   cond "and" cond     { $$ = new LogOp($1, $2, $3); } 
-|   expr '=' expr       { $$ = new ComOp($1, $2, $3); } 
-|   expr '#' expr       { $$ = new ComOp($1, $2, $3); } 
-|   expr '<' expr       { $$ = new ComOp($1, $2, $3); } 
-|   expr '>' expr       { $$ = new ComOp($1, $2, $3); } 
-|   expr "<=" expr      { $$ = new ComOp($1, $2, $3); } 
-|   expr ">=" expr      { $$ = new ComOp($1, $2, $3); }        
+|   "not" cond          { $$ = new LogOp($2, 0); }
+|   cond "or" cond      { $$ = new LogOp($1, 1, $3); }  
+|   cond "and" cond     { $$ = new LogOp($1, 2, $3); } 
+|   expr '=' expr       { $$ = new ComOp($1, 3, $3); } 
+|   expr '#' expr       { $$ = new ComOp($1, 4, $3); } 
+|   expr '<' expr       { $$ = new ComOp($1, 5, $3); } 
+|   expr '>' expr       { $$ = new ComOp($1, 6, $3); } 
+|   expr "<=" expr      { $$ = new ComOp($1, 7, $3); } 
+|   expr ">=" expr      { $$ = new ComOp($1, 8, $3); }        
 ;
 
 %%
