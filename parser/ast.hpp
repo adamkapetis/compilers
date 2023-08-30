@@ -23,34 +23,37 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
 
 
 class Stmt : public AST {
-
+  public:
+  //virtual void printAST(std::ostream &out) const = 0;
 };
 
-class Expr : public Stmt {
+class Expr : public AST {
  public:
+  //virtual void printAST(std::ostream &out) const = 0;
   //virtual int eval() const = 0;
 };
 
 class Id : public Expr {
   public: 
-    Id(char* c) : id(c){}
+    Id(const char* c) : id(c){}
     void printAST(std::ostream &out) const override {
-      out << "identifier (" << id <<")"; 
+      out <<"Id: " << id ; 
     }
   private:
-  char* id;
+  const char* id;
 };
 
 class Cond : public AST {
-
+  public:
+    virtual void printAST(std::ostream &out) const = 0;
 };
 
 class If_then_else : public Stmt {
   public:
     If_then_else(Cond* con,Stmt * st1, Stmt* st2 =nullptr ): cond(con),stmt1(st1),stmt2(st2) {}
     void printAST(std::ostream &out) const override {
-      out << "if:" << *cond <<" then " << *stmt1 ;
-      if(stmt2!=nullptr) out << " else "<< *stmt2;
+      out << "if: ->" << *cond <<"<- " <<" then => {\n" << *stmt1 <<"}\n" ;
+      if(stmt2!=nullptr) out << " else => {\n"<< *stmt2 << "}\n";
     } 
   private:
     Cond* cond;
@@ -62,7 +65,7 @@ class While_stmt : public Stmt {
   public:
     While_stmt(Cond* con, Stmt* st):cond(con),stmt(st){}
     void printAST(std::ostream &out) const override {
-      out << "while( " << *cond << " ) \n do {" << *stmt << "}";
+      out << "while( " << *cond << " ) \n\r do {" << *stmt << "}\n";
     }
   private:
     Cond* cond;
@@ -87,14 +90,14 @@ class Block : public Stmt {
     stmt_list.push_back(s); 
   }
   void printAST(std::ostream &out) const override {
-    out << "Block(";
+    out << "Block{\n";
     bool first = true;
     for (const auto &s : stmt_list) {
       if (!first) out << ", ";
       first = false;
       out << *s;
     }
-    out << ")";
+    out << "}Block\n";
   }
  private:
   std::vector<Stmt *> stmt_list;
@@ -114,7 +117,7 @@ class Exprc : public AST {
     for (const auto &s : exprc) {
       if (!first) out << ", ";
       first = false;
-      out << *s;
+      out <<"(" <<*s << ")";
     }
     out << ")"; 
     }
@@ -122,7 +125,7 @@ class Exprc : public AST {
     std::vector<Expr *> exprc;
 };
 
-class Func_call : public Expr {
+class Func_call : public Expr , public Stmt{
   public:
     Func_call(Id* id, Exprc* exp = nullptr) : Tid(id), exprc(exp){}
     void printAST(std::ostream &out) const override {
@@ -138,7 +141,7 @@ class String_const : public AST{
   public: 
     String_const(char* c) : str(c){}
     void printAST(std::ostream &out) const override {
-      out << "string (" << str <<")"; 
+      out << "[string: " << str <<"]"; 
     }
   private:
   char* str;
@@ -146,21 +149,16 @@ class String_const : public AST{
 
 class L_value : public Expr {
   public:
-    L_value(){}
-    void set_id(char* i){
-      id = new Id(i);
-    }
-    void set_str(char* i){
-      str = new String_const(i);
-    }
+    L_value(Id* i):id(i){}
+    L_value(String_const* i):str(i){}
     void append_expr(Expr* ex){
       expr_list.push_back(ex);
     }
     void printAST(std::ostream &out) const override {
-      if(id==nullptr) out << " str : " << *str;
-      else out << "id : " << *id;
+      if(id==nullptr) out << *str;
+      else out << " " << *id;
       for( const auto &s : expr_list){
-        out<< *s;
+        out<< "[ "<<*s<<" ]";
       }
     }
   private:
@@ -184,7 +182,7 @@ class Int_const : public Expr {
   public: 
     Int_const(int n) : num(n){}
     void printAST(std::ostream &out) const override {
-      out << "integer (" << num <<")"; 
+      out << "[int: " << num <<"]"; 
     }
     int eval() {
       return num;
@@ -197,7 +195,7 @@ class Char_const : public Expr {
   public: 
     Char_const(char c) : var(c){}
     void printAST(std::ostream &out) const override {
-      out << "char (" << var <<")"; 
+      out << "[char: " << var <<" ]"; 
     }
   private:
   char var;
@@ -207,8 +205,11 @@ class Char_const : public Expr {
 class BinOp : public Expr {
   public:
     BinOp(Expr* e1, char o, Expr* e2=nullptr): exprl(e1), op(o), exprr(e2){}
+    BinOp(Expr* e1, char* o, Expr* e2=nullptr): exprl(e1), op_s(o), exprr(e2){}
     void printAST(std::ostream &out) const override {
-    out << op << "(" << *exprl ;
+    if(op_s == nullptr) out << op;
+    else out << op_s;
+    out << "(" << *exprl ;
     if(exprr==nullptr) out << ")";
     else out << ", " << *exprr << ")";
     }
@@ -216,6 +217,7 @@ class BinOp : public Expr {
     Expr* exprl;
     Expr* exprr;
     char op;
+    char* op_s=nullptr;
 };
 
 // class Cond : public AST{
@@ -239,30 +241,31 @@ class BinOp : public Expr {
 
 class LogOp : public Cond {
   public: 
-    LogOp(Cond* left , int o, Cond* right=nullptr): condl(left), op(o), condr(right){} 
+    LogOp(Cond* left , char* o, Cond* right=nullptr): condl(left), op(o), condr(right){} 
     void printAST(std::ostream &out) const override {
-    //   if(condl == nullptr){
-    //     out << " not (" << *condr << ")";
-    //   }
-    //   else if (op == "or"){
-    //     out << "(" << *condl << " or " << *condr << ")";
-    //   }
-    //   else { 
-    //     out << "(" << *condl << " and " << *condr << ")";
-    //   }
+      if(condl == nullptr){
+        out << " not (" << *condr << ")";
+      }
+      else if (op == "or"){
+        out << "(" << *condl << ") or (" << *condr << ")";
+      }
+      else { 
+        out << "(" << *condl << ") and (" << *condr << ")";
+      }
     }
   private:
     Cond* condl;
-    int op;
+    char* op;
     Cond* condr;
 };
 
 class ComOp : public Cond {
   public:
-    ComOp(Expr* e1, char o, Expr* e2): exprl(e1), op(o), exprr(e2){}
+    ComOp(Expr* e1, char o, Expr* e2): exprl(e1), op(o),op_s(nullptr), exprr(e2){}
     ComOp(Expr* e1, char* o, Expr* e2): exprl(e1), op_s(o), exprr(e2){}
     void printAST(std::ostream &out) const override {
-    out << op << "(" << *exprl << ", " << *exprr << ")";
+      if(op_s==nullptr) out << op << "(" << *exprl << ", " << *exprr << ")";
+      else out << op_s << "(" << *exprl << ", " << *exprr << ")";
     }
   private:
     Expr* exprl;
@@ -302,7 +305,11 @@ class Type : public AST{
   public: 
     Type(Dtype typ, Dims* dms = nullptr):dtyp(typ),dims(dms) {}
     void printAST(std::ostream &out) const override {
-      out << dtyp << *dims ;
+      if(dtyp==0) out << " int";
+      else if(dtyp==1) out << " char";
+      else if(dtyp==2) out << " bool";
+      else out << " void";
+      out << *dims ;
     }
   private:
     Dtype dtyp;
@@ -321,8 +328,11 @@ class Id_list : public Local_def{
       Idlist.push_back(id);
     }
     void printAST(std::ostream &out) const override{
+      bool i=false;
       for(const auto &s: Idlist){
+        if(i==true) out << ",";
         out << *s;
+        i=true;
       }
     }
   private:
@@ -349,7 +359,7 @@ class Fpar_def : public Local_def {
     Fpar_def(Id_list* list,Type* typ, bool re=false):ref(re), type(typ),idlist(list){}
     void printAST(std::ostream &out) const override{
       if(ref==true) out << "ref ";
-      out << *idlist << "  " << *type;
+      out << *idlist << " : " << *type;
     }
   private:
     Id_list* idlist;
@@ -359,7 +369,7 @@ class Fpar_def : public Local_def {
 
 class Fpar_list : public Local_def {
   public:
-    Fpar_list(){}
+    Fpar_list(Fpar_def*fpar){par_list.push_back(fpar);}
     void append(Fpar_def* fd){
       par_list.push_back(fd);
     }
@@ -375,9 +385,12 @@ class Fpar_list : public Local_def {
 
 class Header : public Local_def {
   public:
-    Header(Id *i, Fpar_list* par_l,Dtype typ):id(i),type(typ),par_list(par_l) {}
+    Header(Id *i,Dtype typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
     void printAST(std::ostream &out) const override {
-      out << "fun " << *id << "(" << *par_list << ") :" << type; 
+      out << "fun " << *id << "(" ;
+      if(par_list==nullptr) out<<") :";
+      else out <<  *par_list << ") :" ; 
+      out<< type;
     }
   private:
     Id* id;
@@ -395,7 +408,7 @@ class Var_def : public Local_def {
     Var_def(Id_list* idl, Type* ty):id_list(idl), type(ty){
     }
     void printAST(std::ostream &out) const override {
-      out << "var " << *id_list << "type:" << *type;
+      out << "var [" << *id_list << " - type:" << *type<< "]";
     }
   private:
     Id_list * id_list;

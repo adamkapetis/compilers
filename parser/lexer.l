@@ -1,18 +1,31 @@
 %option noyywrap
 
 %{
-#include "parser.hpp"
-#include "ast.hpp"
+#include <iostream>
+#include <string>
 #include "lexer.hpp"
-// #define T_eof          0
-
+#include "ast.hpp"
 int linenumber=1;
+#include "parser.hpp"
+// #define T_eof          0
+int length( char * c){
+        if(c==nullptr) return 0;
+        else{
+                int counter=0;
+                while(c[counter]!='\0'){
+                        counter++;
+                }
+                return counter;
+        }
+}
+
+
 %}
 
 
 L [a-zA-Z]
 D [0-9]
-W [ \t\r\n]
+W [ \t\r]
 HEX [0-9a-fA-F]{2}
 COMMON [^'"\\]
 DOLLAR [^\$]
@@ -20,34 +33,33 @@ DOLLAR [^\$]
 %x IN_COMMENT
 %%
 
-"and"     { return T_and; }
-"char"    { return T_char; }
-"div"     { return T_div; }
-"do"      { return T_do; }
-"else"    { return T_else; }
-"fun"     { return T_fun; }
-"if"      { return T_if; }
-"int"     { return T_int; }
-"mod"     { return T_mod; }
-"not"     { return T_not; }
-"nothing" { return T_nothing; }
-"or"      { return T_or; }
-"ref"     { return T_ref; }
-"return" { return T_return; }
-"then"    { return T_then; }
-"var"     { return T_var; }
-"while"   { return T_while;}
+"and"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.op_s="and";return T_and; }
+"char"    { /*printf("lexeme=\"%s\"\n",yytext);*/return T_char; }
+"div"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.op_s="div";return T_div; }
+"do"      { /*printf("lexeme=\"%s\"\n",yytext);*/return T_do; }
+"else"    { /*printf("lexeme=\"%s\"\n",yytext);*/return T_else; }
+"fun"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.def="fun";return T_fun; }
+"if"      { /*printf("lexeme=\"%s\"\n",yytext);*/return T_if; }
+"int"     { /*printf("lexeme=\"%s\"\n",yytext);*/return T_int; }
+"mod"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.op_s="mod";return T_mod; }
+"not"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.op_s="not";return T_not; }
+"nothing" { /*printf("lexeme=\"%s\"\n",yytext);*/return T_nothing; }
+"or"      { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.op_s="or";return T_or; }
+"ref"     { /*printf("lexeme=\"%s\"\n",yytext);*/return T_ref; }
+"return"  { /*printf("lexeme=\"%s\"\n",yytext);*/ return T_return; }
+"then"    { /*printf("lexeme=\"%s\"\n",yytext);*/return T_then; }
+"var"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.def="var";return T_var; }
+"while"   { /*printf("lexeme=\"%s\"\n",yytext);*/return T_while;}
+{L}({L}|{D}|\_)*                                           {printf("T_id lexeme=\"%s \" of length %d\n", yytext,length(yytext));yylval.id=(char*)malloc(strlen(yytext)+1);strcpy(yylval.id,yytext);return T_id; }
+{D}+                                                       {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.num = atoi(yytext); return T_int_const; }
+\'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.var = yytext[0]; return T_char_const; } 
+\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.str = (char*)malloc(strlen(yytext)+1);strcpy(yylval.str,yytext); return T_string_const;}
+\<\-                                                       {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.div_s = (char*)malloc(strlen(yytext)+1);strcpy(yylval.div_s,yytext); return T_arrow;}
+[\(\)\{\}\[\]\,\;\:]                                       {/*printf("lexeme=\"%s\"\n", yytext);yylval.div = yytext[0];*/ return yytext[0];}
+\<\=                                                       {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.op_s = (char*)malloc(strlen(yytext)+1);strcpy(yylval.op_s,yytext); return T_lesseq; }
+>=                                                         {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.op_s = (char*)malloc(strlen(yytext)+1);strcpy(yylval.op_s,yytext); return T_greateq; }
+[\+\-/%*=\#\<\>]                                           {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.op = yytext[0]; return yytext[0]; }
 
-{L}({L}|{D}|\_)*                                           { yylval.id = yytext; return T_id; }
-{D}+                                                       { yylval.num = atoi(yytext); return T_int_const; }
-\'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      { yylval.var = yytext[0]; return T_char_const; } 
-\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     { yylval.str = yytext; return T_string_const;}
-\<\-                                                       { yylval.div_s = yytext; return T_arrow;}
-[\(\)\{\}\[\]\,\;\:]                                       { yylval.div = yytext[0]; return yytext[0];}
-\<\=                                                       { yylval.op_s = yytext; return T_lesseq; }
->=                                                         { yylval.op_s = yytext; return T_greateq; }
-[\+\-/%*=\#\<\>]                                           { yylval.op = yytext[0]; return yytext[0]; }
-\n                                                         { ++linenumber;}
 <INITIAL>{
 "$$"              BEGIN(IN_COMMENT);
 }
@@ -56,14 +68,12 @@ DOLLAR [^\$]
 [^$\n]+   
 \n        linenumber++;
 }
+\n                                                         { ++linenumber;}
 \$.*\n                                                     { ++linenumber;}
 {W}+                                                       { /* nothing */ }
-
-
-.       { fprintf(stderr, "Illegal character with code %d",
-                  yytext[0]);
-          exit(1);
+.    {   
+        std::cout << "illegal character with code " << yytext << "at line" << linenumber << "lexeme" << yytext ;           
+         // exit(1);
         }
-
 %%
 
