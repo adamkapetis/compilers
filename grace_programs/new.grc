@@ -1,0 +1,5 @@
+fun main () : nothing
+
+var largelvalue : int[20][10][20];
+{
+largevalue[10+1][2*5][10-2] <- 5; }
