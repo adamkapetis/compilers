@@ -50,7 +50,7 @@ DOLLAR [^\$]
 "then"    { /*printf("lexeme=\"%s\"\n",yytext);*/return T_then; }
 "var"     { /*printf("lexeme=\"%s\"\n",yytext);*/yylval.def="var";return T_var; }
 "while"   { /*printf("lexeme=\"%s\"\n",yytext);*/return T_while;}
-{L}({L}|{D}|\_)*                                           {printf("T_id lexeme=\"%s \" of length %d\n", yytext,length(yytext));yylval.id=(char*)malloc(strlen(yytext)+1);strcpy(yylval.id,yytext);return T_id; }
+{L}({L}|{D}|\_)*                                           {/*printf("T_id lexeme=\"%s \" of length %d\n", yytext,length(yytext));*/yylval.id=(char*)malloc(strlen(yytext)+1);strcpy(yylval.id,yytext);return T_id; }
 {D}+                                                       {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.num = atoi(yytext); return T_int_const; }
 \'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.var = yytext[0]; return T_char_const; } 
 \"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     {/*printf("lexeme=\"%s\"\n", yytext);*/yylval.str = (char*)malloc(strlen(yytext)+1);strcpy(yylval.str,yytext); return T_string_const;}

@@ -309,7 +309,7 @@ class Type : public AST{
       else if(dtyp==1) out << " char";
       else if(dtyp==2) out << " bool";
       else out << " void";
-      out << *dims ;
+      if(dims != nullptr) out << *dims ;
     }
   private:
     Dtype dtyp;
@@ -385,16 +385,16 @@ class Fpar_list : public Local_def {
 
 class Header : public Local_def {
   public:
-    Header(Id *i,Dtype typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
+    Header(Id *i,Type * typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
     void printAST(std::ostream &out) const override {
       out << "fun " << *id << "(" ;
       if(par_list==nullptr) out<<") :";
       else out <<  *par_list << ") :" ; 
-      out<< type;
+      out<< *type;
     }
   private:
     Id* id;
-    Dtype type;
+    Type * type;
     Fpar_list* par_list;
 };
 
