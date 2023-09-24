@@ -196,7 +196,7 @@ expr:
 |   func_call           { $$ = $1;  }
 |   '+' expr            { $$ = new BinOp($2,$1); }
 |   '-' expr            { $$ = new BinOp($2,$1); }
-| expr '+' expr         { $$ = new BinOp($1, $2, $3);  }
+| expr '+' expr         { $$ = new BinOp($1, $2, $3); $$->sem(); }
 | expr '-' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr '*' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr "div" expr       { $$ = new BinOp($1, $2, $3);  } // alladh edo gia na pairnei "div"
@@ -218,7 +218,7 @@ cond:
 %%
 
 void yyerror(const char *msg) {
-    printf("Syntax error:%s at line :%d, token : %s\n",msg,linenumber,yytext);
+    printf("Syntax error:%s at line :%d, token : %s\n",msg,linenumber,start);
     exit(42);
 }
 
