@@ -104,7 +104,7 @@
 %%
 
 program: 
-    func_def	                            {  }
+    func_def	                            { std::cout << "AST : " << *$1 << std::endl ; }
 ;
 ld:                                         { $$=new Def_list(); }
 |   ld local_def                            { $1->append($2);$$=$1; }
@@ -113,10 +113,10 @@ func_def:
     header ld block                         { $$=new Function($1,$2,$3); }
 ;
 header:
-    "fun" T_id '(' fd ')' ':' ret_type      { std::cout<<$1 << $2<< $7 <<" \n";$$= new Header(new Id($2),$7,$4); }
-|    "fun" T_id '(' ')' ':' ret_type        { std::cout<<$1 << $2 << $6<<"no id \n";$$= new Header(new Id($2),$6); }
+    "fun" T_id '(' fd ')' ':' ret_type      { $$= new Header(new Id($2),new Type($7),$4); }
+|    "fun" T_id '(' ')' ':' ret_type        { $$= new Header(new Id($2),new Type($6)); }
 ;
-fd: fpar_def                                {std::cout<<"new param list"; $$=new Fpar_list($1); }
+fd: fpar_def                                { $$=new Fpar_list($1); }
 |   fd ';' fpar_def                         { $1->append($3);$$=$1; }
 ; 
 
@@ -155,11 +155,11 @@ local_def:
 ;
    
 var_def:
-    "var" T_id td ':' type ';'              { std::cout <<"printing a variable: "<<$1 << $2 ;$3->append(new Id($2));$$=new Var_def($3,$5);std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl; }
+    "var" T_id td ':' type ';'              { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/$3->append(new Id($2));$$=new Var_def($3,$5);/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
 ;
 stmt:
     ';'                                     {}
-|   l_value "<-" expr ';'                   { $$=new Valuation($1,$3); std::cout << *$$;      }//{$1=new L_value();$$=new Valuation($1,$3);}
+|   l_value "<-" expr ';'                   { $$=new Valuation($1,$3);/* std::cout << *$$;      */}//{$1=new L_value();$$=new Valuation($1,$3);}
 |   block                                   { $$=$1;                        } // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           { $$=$1;                        }
 |   "if" cond "then" stmt "else" stmt       { $$=new If_then_else($2,$4,$6);}
@@ -196,7 +196,7 @@ expr:
 |   func_call           { $$ = $1;  }
 |   '+' expr            { $$ = new BinOp($2,$1); }
 |   '-' expr            { $$ = new BinOp($2,$1); }
-| expr '+' expr         { $$ = new BinOp($1, $2, $3);  }
+| expr '+' expr         { $$ = new BinOp($1, $2, $3); $$->sem(); }
 | expr '-' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr '*' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr "div" expr       { $$ = new BinOp($1, $2, $3);  } // alladh edo gia na pairnei "div"
@@ -218,7 +218,7 @@ cond:
 %%
 
 void yyerror(const char *msg) {
-    printf("Syntax error:%s at line :%d, token : %s\n",msg,linenumber,yytext);
+    printf("Syntax error:%s at line :%d, token : %s\n",msg,linenumber,start);
     exit(42);
 }
 

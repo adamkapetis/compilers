@@ -6,12 +6,14 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "lexer.hpp"
 
 enum Dtype { Type_int, Type_char, Type_bool, Type_void };
 
 
 class AST {
   public: 
+    virtual void sem() {}
     virtual void printAST(std::ostream &out) const = 0;
 };
 
@@ -31,6 +33,18 @@ class Expr : public AST {
  public:
   //virtual void printAST(std::ostream &out) const = 0;
   //virtual int eval() const = 0;
+  void check_type(Dtype t){
+    sem();
+    if(t!=exprtype) yyerror("type missmatch");
+  }
+  void set_type(Dtype t) {
+    exprtype=t;
+  }
+  Dtype expr_type(){
+    return exprtype;
+  }
+  private:
+  Dtype exprtype;
 };
 
 class Id : public Expr {
@@ -46,6 +60,18 @@ class Id : public Expr {
 class Cond : public AST {
   public:
     virtual void printAST(std::ostream &out) const = 0;
+  void check_type(Dtype t){
+    sem();
+    if(t!=condtype) yyerror("type missmatch");
+  }
+  void set_type(Dtype t) {
+    condtype=t;
+  }
+  Dtype cond_type(){
+    return condtype;
+  }
+  private:
+  Dtype condtype;
 };
 
 class If_then_else : public Stmt {
@@ -154,6 +180,8 @@ class L_value : public Expr {
     void append_expr(Expr* ex){
       expr_list.push_back(ex);
     }
+    void sem() override {
+    }
     void printAST(std::ostream &out) const override {
       if(id==nullptr) out << *str;
       else out << " " << *id;
@@ -184,6 +212,9 @@ class Int_const : public Expr {
     void printAST(std::ostream &out) const override {
       out << "[int: " << num <<"]"; 
     }
+    void sem() override {
+      set_type(Type_int);
+    }
     int eval() {
       return num;
     }
@@ -196,6 +227,9 @@ class Char_const : public Expr {
     Char_const(char c) : var(c){}
     void printAST(std::ostream &out) const override {
       out << "[char: " << var <<" ]"; 
+    }
+    void sem() override {
+      set_type(Type_char);
     }
   private:
   char var;
@@ -212,6 +246,10 @@ class BinOp : public Expr {
     out << "(" << *exprl ;
     if(exprr==nullptr) out << ")";
     else out << ", " << *exprr << ")";
+    }
+    void sem() override{
+      exprl->check_type(Type_int);
+      exprr->check_type(Type_int);
     }
   private:
     Expr* exprl;
@@ -253,6 +291,15 @@ class LogOp : public Cond {
         out << "(" << *condl << ") and (" << *condr << ")";
       }
     }
+    void sem() override{
+      condl->sem();
+      condl->check_type(Type_bool);
+      if(condr!=nullptr){
+        condr->sem();
+        condr->check_type(Type_bool);
+        }
+      set_type(Type_bool);
+    }
   private:
     Cond* condl;
     char* op;
@@ -266,6 +313,11 @@ class ComOp : public Cond {
     void printAST(std::ostream &out) const override {
       if(op_s==nullptr) out << op << "(" << *exprl << ", " << *exprr << ")";
       else out << op_s << "(" << *exprl << ", " << *exprr << ")";
+    }
+    void sem() override{
+      if(exprl->expr_type()!=Type_char&&exprl->expr_type()!=Type_int) yyerror("can't compare ");
+      exprl->check_type(exprr->expr_type());
+      set_type(Type_bool);
     }
   private:
     Expr* exprl;
@@ -309,8 +361,12 @@ class Type : public AST{
       else if(dtyp==1) out << " char";
       else if(dtyp==2) out << " bool";
       else out << " void";
-      out << *dims ;
+      if(dims != nullptr) out << *dims ;
     }
+    Dtype basic_type(){
+      return dtyp;
+    }
+
   private:
     Dtype dtyp;
     Dims* dims;
@@ -326,6 +382,11 @@ class Id_list : public Local_def{
     Id_list(){}
     void append(Id* id){
       Idlist.push_back(id);
+    }
+    void id_type(Dtype t){
+      for( const auto &s : Idlist){
+        s->set_type(t);
+      }
     }
     void printAST(std::ostream &out) const override{
       bool i=false;
@@ -385,16 +446,16 @@ class Fpar_list : public Local_def {
 
 class Header : public Local_def {
   public:
-    Header(Id *i,Dtype typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
+    Header(Id *i,Type * typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
     void printAST(std::ostream &out) const override {
       out << "fun " << *id << "(" ;
       if(par_list==nullptr) out<<") :";
       else out <<  *par_list << ") :" ; 
-      out<< type;
+      out<< *type;
     }
   private:
     Id* id;
-    Dtype type;
+    Type * type;
     Fpar_list* par_list;
 };
 
@@ -409,6 +470,9 @@ class Var_def : public Local_def {
     }
     void printAST(std::ostream &out) const override {
       out << "var [" << *id_list << " - type:" << *type<< "]";
+    }
+    void sem(){
+      id_list->id_type(type->basic_type());
     }
   private:
     Id_list * id_list;
