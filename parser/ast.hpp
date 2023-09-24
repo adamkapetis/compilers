@@ -250,6 +250,7 @@ class BinOp : public Expr {
     void sem() override{
       exprl->check_type(Type_int);
       exprr->check_type(Type_int);
+      set_type(Type_int);
     }
   private:
     Expr* exprl;
