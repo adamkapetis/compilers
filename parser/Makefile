@@ -11,7 +11,7 @@ lexer.cpp: lexer.l
 lexer.o: lexer.cpp lexer.hpp parser.hpp ast.hpp
 
 parser.hpp parser.cpp: parser.y
-	bison -dv -Wcounterexamples -o parser.cpp parser.y
+	bison -dv  -o parser.cpp parser.y
 
 parser.o: parser.cpp lexer.hpp ast.hpp parser.hpp
 
