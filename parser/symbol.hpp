@@ -17,22 +17,22 @@ struct STEntry {
 class Scope {
  public:
   Scope() {}
-  STEntry *lookup(char c) {
+  STEntry *lookup(char* c) {
     if (locals.find(c) == locals.end()) return nullptr;
     return &(locals[c]);
   }
-  void insert(char c, Dtype t) {
+  void insert(char* c, Dtype t) {
     if (locals.find(c) != locals.end())
       yyerror("Duplicate variable declaration");
     locals[c] = STEntry(t);
   }
  private:
-  std::map<char, STEntry> locals;
+  std::map<char *, STEntry> locals;
 };
 
 class SymbolTable {
  public:
-  STEntry *lookup(char c) {
+  STEntry *lookup(char* c) {
     for (auto s = scopes.rbegin(); s != scopes.rend(); ++s) {
       STEntry *e = s->lookup(c);
       if (e != nullptr) return e;
@@ -40,7 +40,7 @@ class SymbolTable {
     yyerror("Variable not found");
     return nullptr;
   }
-  void insert(char c, Dtype t) {
+  void insert(char* c, Dtype t) {
     scopes.back().insert(c, t);
   }
   void push_scope() {
