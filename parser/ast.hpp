@@ -7,6 +7,7 @@
 #include <map>
 #include <string>
 #include "lexer.hpp"
+#include "symbol.hpp"
 
 enum Dtype { Type_int, Type_char, Type_bool, Type_void };
 
@@ -52,6 +53,9 @@ class Id : public Expr {
     Id(const char* c) : id(c){}
     void printAST(std::ostream &out) const override {
       out <<"Id: " << id ; 
+    }
+    const char * name(){
+      return id;
     }
   private:
   const char* id;
@@ -485,6 +489,11 @@ class Function : public Local_def {
     Function(Header* head, Def_list* d_list, Block* bl): header(head), def_list(d_list), block(bl){}
     void printAST(std::ostream &out) const override {
       out << *header << std::endl << *def_list << std::endl << *block;
+    }
+    void sem() override{
+      st.push_scope();
+      for()
+
     }
   private:
     Header* header;
