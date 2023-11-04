@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <string>
+#include <string.h>
 #include "lexer.hpp"
 #include "symbol.hpp"
 
@@ -56,6 +56,11 @@ class Id : public Expr {
     }
     const char * name(){
       return id;
+    }
+    void sem() override {
+      char *b;
+      strcpy(b,id);
+      st.insert(b ,expr_type());
     }
   private:
   const char* id;
@@ -393,6 +398,9 @@ class Id_list : public Local_def{
         s->set_type(t);
       }
     }
+    void sem() override {
+      for(const auto &s : Idlist) s->sem();
+    }
     void printAST(std::ostream &out) const override{
       bool i=false;
       for(const auto &s: Idlist){
@@ -426,6 +434,10 @@ class Fpar_def : public Local_def {
     void printAST(std::ostream &out) const override{
       if(ref==true) out << "ref ";
       out << *idlist << " : " << *type;
+    }
+    void sem() override{
+      idlist->id_type(type->basic_type());
+      idlist->sem();      
     }
   private:
     Id_list* idlist;
