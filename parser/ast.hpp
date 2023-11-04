@@ -387,6 +387,12 @@ class Local_def: public AST{
   private:
 };
 
+class L_def : public Local_def{
+  public:
+    virtual void namesem() {};
+  private:
+};
+
 class Id_list : public Local_def{
   public:
     Id_list(){}
@@ -416,7 +422,7 @@ class Id_list : public Local_def{
 class Def_list : public Local_def{
   public:
     Def_list(){}
-    void append(Local_def* ld){
+    void append(L_def* ld){
       deflist.push_back(ld);
     }
     void printAST(std::ostream &out) const override {
@@ -424,8 +430,13 @@ class Def_list : public Local_def{
         out << *s;
       }
     }
+    void sem() override {
+      for(const auto &s : deflist){
+        s->sem();
+      }
+    }
   private:
-    std::vector<Local_def*> deflist; 
+    std::vector<L_def*> deflist; 
 };
 
 class Fpar_def : public Local_def {
@@ -456,12 +467,15 @@ class Fpar_list : public Local_def {
         out << *s ;
       }
     }
+    void sem() override{
+      for(const auto &s : par_list) s->sem();
+    }
   private:
     std::vector<Fpar_def*> par_list;
 };
 
 
-class Header : public Local_def {
+class Header : public L_def {
   public:
     Header(Id *i,Type * typ, Fpar_list* par_l=nullptr):id(i),type(typ),par_list(par_l) {}
     void printAST(std::ostream &out) const override {
@@ -469,6 +483,13 @@ class Header : public Local_def {
       if(par_list==nullptr) out<<") :";
       else out <<  *par_list << ") :" ; 
       out<< *type;
+    }
+    void sem() override{
+      par_list->sem();
+    }
+    void namesem() override{
+      id->set_type(type->basic_type());
+      id->sem(); // prepei na apothikeboyme kai oti einai sygekrimena synarthsh kai posa orismata.
     }
   private:
     Id* id;
@@ -481,7 +502,7 @@ class Func_def : public Local_def {
   private:
 };
 
-class Var_def : public Local_def {
+class Var_def : public L_def {
   public:
     Var_def(Id_list* idl, Type* ty):id_list(idl), type(ty){
     }
@@ -490,22 +511,24 @@ class Var_def : public Local_def {
     }
     void sem(){
       id_list->id_type(type->basic_type());
+      id_list->sem();
     }
   private:
     Id_list * id_list;
     Type* type;
 };
 
-class Function : public Local_def {
+class Function : public L_def {
   public: 
     Function(Header* head, Def_list* d_list, Block* bl): header(head), def_list(d_list), block(bl){}
     void printAST(std::ostream &out) const override {
       out << *header << std::endl << *def_list << std::endl << *block;
     }
     void sem() override{
+      if(!st.check_empty()) st.insert(header->)
       st.push_scope();
-      for()
-
+      header->sem();
+      def_list->sem();
     }
   private:
     Header* header;
