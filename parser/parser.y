@@ -104,7 +104,7 @@
 %%
 
 program: 
-    func_def	                            { std::cout << "AST : " << *$1 << std::endl ; }
+    func_def	                            { std::cout << "AST : " << *$1 << std::endl ; $1->sem() }
 ;
 ld:                                         { $$=new Def_list(); }
 |   ld local_def                            { $1->append($2);$$=$1; }

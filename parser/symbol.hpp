@@ -49,6 +49,9 @@ class SymbolTable {
   void pop_scope() {
     scopes.pop_back();
   }
+  bool check_empty(){
+    return scopes.empty();
+  }
  private:
   std::vector<Scope> scopes;
 };
