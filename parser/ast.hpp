@@ -7,10 +7,8 @@
 #include <map>
 #include <string.h>
 #include "lexer.hpp"
-#include "symbol.hpp"
 
 enum Dtype { Type_int, Type_char, Type_bool, Type_void };
-
 
 class AST {
   public: 
@@ -30,22 +28,76 @@ class Stmt : public AST {
   //virtual void printAST(std::ostream &out) const = 0;
 };
 
+class Dim : public AST {
+  public:
+    Dim(int inte):range(inte){}
+    void printAST(std::ostream &out) const override {
+      out<< "[" << range << "]";
+    }
+  private:
+    int range;
+};
+
+class Dims : public AST {
+  public:
+    Dims(){}
+    void append(Dim * dim){
+      dims.push_back(dim);
+    }
+    void set_type(Dtype dt) {type=dt;}
+    void printAST(std::ostream &out) const override {
+      for(const auto &s: dims ){
+        out << *s;
+      }
+    }
+  private:
+    std::vector<Dim *> dims;
+    Dtype type;
+};
+
+class Type : public AST{
+  public: 
+    Type(Dtype typ, Dims* dms = nullptr):dtyp(typ),dims(dms) {}
+    void printAST(std::ostream &out) const override {
+      if(dtyp==0) out << " int";
+      else if(dtyp==1) out << " char";
+      else if(dtyp==2) out << " bool";
+      else out << " void";
+      if(dims != nullptr) out << *dims ;
+    }
+    Dtype basic_type(){
+      return dtyp;
+    }
+  private:
+    Dtype dtyp;
+    Dims* dims;
+};
+
+#include "symbol.hpp"
+
 class Expr : public AST {
  public:
   //virtual void printAST(std::ostream &out) const = 0;
   //virtual int eval() const = 0;
   void check_type(Dtype t){
     sem();
-    if(t!=exprtype) yyerror("type missmatch");
+    if(t!=exprtype->basic_type()) yyerror("type missmatch");
   }
   void set_type(Dtype t) {
-    exprtype=t;
+    exprtype= new Type(t);
   }
-  Dtype expr_type(){
+  void set_typedims(Type* t){
+    exprtype= t;
+  }
+  Dtype expr_btype(){
+    return exprtype->basic_type();
+  }
+  Type* expr_type(){
     return exprtype;
   }
   private:
-  Dtype exprtype;
+  Type* exprtype;
+  //Dtype exprtype;
 };
 
 class Id : public Expr {
@@ -58,9 +110,16 @@ class Id : public Expr {
       return id;
     }
     void sem() override {
-      char *b;
-      strcpy(b,id);
-      st.insert(b ,expr_type());
+      //char *b;
+      //strcpy(b,id);
+      //printf("inserting id %s\n", id);
+      st.insert(id ,expr_type());
+    }
+    void fsem() {
+      //char *b;
+      //strcpy(b,id);
+      //printf("inserting function %s\n", id);
+      st.insertf(id ,expr_btype()); // eisagoume mono onoma kai afou eisaxthoun oi metablhtes prosthetoume poses einai
     }
   private:
   const char* id;
@@ -81,6 +140,7 @@ class Cond : public AST {
   }
   private:
   Dtype condtype;
+
 };
 
 class If_then_else : public Stmt {
@@ -134,6 +194,11 @@ class Block : public Stmt {
     }
     out << "}Block\n";
   }
+  void sem() override{
+    for(const auto &s : stmt_list){
+      s->sem();
+    }
+  }
  private:
   std::vector<Stmt *> stmt_list;
 };
@@ -164,7 +229,9 @@ class Func_call : public Expr , public Stmt{
   public:
     Func_call(Id* id, Exprc* exp = nullptr) : Tid(id), exprc(exp){}
     void printAST(std::ostream &out) const override {
-      out << *Tid << "(" << *exprc << ")"; 
+      out << *Tid << "(" ;
+      if(exprc!=nullptr) out << *exprc ;
+      out << ")"; 
     }
   private:
     Id* Tid;
@@ -325,8 +392,8 @@ class ComOp : public Cond {
       else out << op_s << "(" << *exprl << ", " << *exprr << ")";
     }
     void sem() override{
-      if(exprl->expr_type()!=Type_char&&exprl->expr_type()!=Type_int) yyerror("can't compare ");
-      exprl->check_type(exprr->expr_type());
+      if(exprl->expr_btype()!=Type_char&&exprl->expr_btype()!=Type_int) yyerror("can't compare ");
+      exprl->check_type(exprr->expr_btype());
       set_type(Type_bool);
     }
   private:
@@ -336,52 +403,6 @@ class ComOp : public Cond {
     char op;
 };
 
-class Dim : public AST {
-  public:
-    Dim(int inte):range(inte){}
-    void printAST(std::ostream &out) const override {
-      out<< "[" << range << "]";
-    }
-  private:
-    int range;
-};
-
-class Dims : public AST {
-  public:
-    Dims(){}
-    void append(Dim * dim){
-      dims.push_back(dim);
-    }
-    void set_type(Dtype dt) {type=dt;}
-    void printAST(std::ostream &out) const override {
-      for(const auto &s: dims ){
-        out << *s;
-      }
-    }
-  private:
-    std::vector<Dim *> dims;
-    Dtype type;
-};
-
-class Type : public AST{
-  public: 
-    Type(Dtype typ, Dims* dms = nullptr):dtyp(typ),dims(dms) {}
-    void printAST(std::ostream &out) const override {
-      if(dtyp==0) out << " int";
-      else if(dtyp==1) out << " char";
-      else if(dtyp==2) out << " bool";
-      else out << " void";
-      if(dims != nullptr) out << *dims ;
-    }
-    Dtype basic_type(){
-      return dtyp;
-    }
-
-  private:
-    Dtype dtyp;
-    Dims* dims;
-};
-
 class Local_def: public AST{
   public:
   private:
@@ -389,7 +410,7 @@ class Local_def: public AST{
 
 class L_def : public Local_def{
   public:
-    virtual void namesem() {};
+    virtual void namesem() {}
   private:
 };
 
@@ -399,9 +420,9 @@ class Id_list : public Local_def{
     void append(Id* id){
       Idlist.push_back(id);
     }
-    void id_type(Dtype t){
+    void id_type(Type* t){
       for( const auto &s : Idlist){
-        s->set_type(t);
+        s->set_typedims(t);
       }
     }
     void sem() override {
@@ -447,7 +468,9 @@ class Fpar_def : public Local_def {
       out << *idlist << " : " << *type;
     }
     void sem() override{
-      idlist->id_type(type->basic_type());
+      //printf("setting id_list type\n");
+      idlist->id_type(type);
+      //printf("idlist->sem\n");
       idlist->sem();      
     }
   private:
@@ -468,6 +491,7 @@ class Fpar_list : public Local_def {
       }
     }
     void sem() override{
+      //printf("entered par_list\n");
       for(const auto &s : par_list) s->sem();
     }
   private:
@@ -485,11 +509,14 @@ class Header : public L_def {
       out<< *type;
     }
     void sem() override{
-      par_list->sem();
+      //printf("entering par_list\n");
+      if(par_list==nullptr); //printf("null parlist abort");
+      else par_list->sem();
     }
     void namesem() override{
       id->set_type(type->basic_type());
-      id->sem(); // prepei na apothikeboyme kai oti einai sygekrimena synarthsh kai posa orismata.
+      //printf("using fsem\n");
+      id->fsem(); // prepei na apothikeboyme kai oti einai sygekrimena synarthsh kai posa orismata.
     }
   private:
     Id* id;
@@ -510,7 +537,7 @@ class Var_def : public L_def {
       out << "var [" << *id_list << " - type:" << *type<< "]";
     }
     void sem(){
-      id_list->id_type(type->basic_type());
+      id_list->id_type(type);
       id_list->sem();
     }
   private:
@@ -525,10 +552,27 @@ class Function : public L_def {
       out << *header << std::endl << *def_list << std::endl << *block;
     }
     void sem() override{
-      if(!st.check_empty()) st.insert(header->)
+      int i;
+      
+      //printf("entered Function class sem\n");
+      if(!st.check_empty()) {
+        //printf("st not empty");
+        header->namesem();
+      }
+      //printf("pushing scope");
       st.push_scope();
+      header->namesem(); 
+      //printf("header->sem\n");
       header->sem();
+      st.stopfunc();
+      //printf("fuction read\n");
+      i=st.scope_size()-1;
+      st.f_args(i);//diabazoume to megethos tou scope mexri tora kai to anathetoume sta argoumenet ths synarthshs
+      printf("function arguements read, number : %d\n", i);
       def_list->sem();
+      printf("block->sem\n");
+      block->sem();
+      st.pop_scope();
     }
   private:
     Header* header;

@@ -5,6 +5,7 @@
 #include <string>
 #include "lexer.hpp"
 #include "ast.hpp"
+//#include "symbol.hpp"
 int linenumber=1;
 bool newline=true;
 char * start;

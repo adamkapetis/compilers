@@ -4,11 +4,12 @@
 #include <string>
 #include <cstdlib>
 #include "lexer.hpp"
+//#include "symbol.hpp"
 #include "ast.hpp"
 
+
 #define YYDEBUG 1
-
-
+SymbolTable st;
 
 %}
 
@@ -21,7 +22,7 @@
     Header * header;
     Func_def * func_def;
     Var_def * var_def;
-    Local_def * local_def;
+    L_def * local_def;
     Def_list * deflist;
     Type * type;
     Id_list * id_list;
@@ -104,7 +105,7 @@
 %%
 
 program: 
-    func_def	                            { std::cout << "AST : " << *$1 << std::endl ; $1->sem() }
+    func_def	                            { std::cout << "AST : " << *$1 << std::endl ;$1->sem(); }
 ;
 ld:                                         { $$=new Def_list(); }
 |   ld local_def                            { $1->append($2);$$=$1; }
@@ -150,7 +151,6 @@ fpar_type:
 ;       
 local_def:      
     func_def                                { $$=$1; }
-|   header ';'                              { $$=$1; }
 |   var_def                                 { $$=$1; }
 ;
    
@@ -168,8 +168,8 @@ stmt:
 |   "return" expr ';'                       { $$=new Return_stmt($2);       }
 |   "return" ';'                            { $$=new Return_stmt();         }    
 ;
-stmtd: /*nothing*/          { $$ = new Block(); }
-|   stmtd stmt              { $1->append($2); $$=$1; }
+stmtd: /*nothing*/          { std::cout<<"created new block \n" ;$$ = new Block(); }
+|   stmtd stmt              { $1->append($2); $$=$1; std::cout << "appended to block stmt:" << *$2<<std::endl; }
 ;
 block: 
     '{' stmtd '}'           { $$=$2; }
@@ -179,7 +179,7 @@ exprc: /*nothing*/
 |   exprc ',' expr          { $1->append($3); $$ = $1; } 
 ;
 func_call:
-    T_id '(' exprc ')'      { $$ = new Func_call(new Id($1),$3); }
+    T_id '(' exprc ')'      { std::cout<<"calling function "<<$1 <<std::endl ;$$ = new Func_call(new Id($1),$3); }
 |   T_id '(' ')'            { $$ = new Func_call(new Id($1)); }
 ;
 l_value:
@@ -196,7 +196,7 @@ expr:
 |   func_call           { $$ = $1;  }
 |   '+' expr            { $$ = new BinOp($2,$1); }
 |   '-' expr            { $$ = new BinOp($2,$1); }
-| expr '+' expr         { $$ = new BinOp($1, $2, $3); $$->sem(); }
+| expr '+' expr         { $$ = new BinOp($1, $2, $3); /*$$->sem();*/ }
 | expr '-' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr '*' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr "div" expr       { $$ = new BinOp($1, $2, $3);  } // alladh edo gia na pairnei "div"
