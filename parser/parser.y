@@ -114,8 +114,8 @@ func_def:
     header ld block                         { $$=new Function($1,$2,$3); }
 ;
 header:
-    "fun" T_id '(' fd ')' ':' ret_type      { $$= new Header(new Id($2),new Type($7),$4); }
-|    "fun" T_id '(' ')' ':' ret_type        { $$= new Header(new Id($2),new Type($6)); }
+    "fun" T_id '(' fd ')' ':' ret_type      { $$= new Header(new Id($2),new Type($7,new Dims()),$4); }
+|    "fun" T_id '(' ')' ':' ret_type        { $$= new Header(new Id($2),new Type($6,new Dims())); }
 ;
 fd: fpar_def                                { $$=new Fpar_list($1); }
 |   fd ';' fpar_def                         { $1->append($3);$$=$1; }
@@ -135,7 +135,7 @@ data_type:
 |   "char"                                  { $$=Type_char; } 
 ;                   
 cd: /*nothing*/                             { $$ = new Dims(); }
-|  cd  '[' T_int_const ']'                  { /*std::cout << "number" <<$3 ;*/$1->append(new Dim($3)); $$=$1; }
+|  cd  '[' T_int_const ']'                  { /*std::cout << "number" <<$3 ;*/$1->append($3); $$=$1; }
 ;       
 type:       
     data_type cd                            { $$ = new Type($1,$2); }
@@ -146,7 +146,7 @@ ret_type:
 ;       
 
 fpar_type:      
-    data_type '[' ']' cd                    { $4->append(new Dim(0));$$ = new Type($1,$4); }
+    data_type '[' ']' cd                    { $4->append(0);$$ = new Type($1,$4); }
 |   data_type  cd                           { $$ = new Type($1,$2); }
 ;       
 local_def:      
@@ -158,7 +158,7 @@ var_def:
     "var" T_id td ':' type ';'              { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/$3->append(new Id($2));$$=new Var_def($3,$5);/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
 ;
 stmt:
-    ';'                                     {}
+    ';'                                     { $$=new End();}
 |   l_value "<-" expr ';'                   { $$=new Valuation($1,$3);/* std::cout << *$$;      */}//{$1=new L_value();$$=new Valuation($1,$3);}
 |   block                                   { $$=$1;                        } // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           { $$=$1;                        }
@@ -168,8 +168,8 @@ stmt:
 |   "return" expr ';'                       { $$=new Return_stmt($2);       }
 |   "return" ';'                            { $$=new Return_stmt();         }    
 ;
-stmtd: /*nothing*/          { std::cout<<"created new block \n" ;$$ = new Block(); }
-|   stmtd stmt              { $1->append($2); $$=$1; std::cout << "appended to block stmt:" << *$2<<std::endl; }
+stmtd: /*nothing*/          { /*std::cout<<"created new block \n" ;*/$$ = new Block(); }
+|   stmtd stmt              { /*std::cout << "appended to block stmt:" << *$2<<std::endl;*/ $1->append($2); $$=$1; }
 ;
 block: 
     '{' stmtd '}'           { $$=$2; }

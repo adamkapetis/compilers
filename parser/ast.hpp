@@ -24,40 +24,53 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
 
 
 class Stmt : public AST {
+  
   public:
-  //virtual void printAST(std::ostream &out) const = 0;
+  Stmt(){}
+  // virtual void printAST(std::ostream &out) const = 0;
+  // virtual void sem() const =0;
 };
 
-class Dim : public AST {
-  public:
-    Dim(int inte):range(inte){}
-    void printAST(std::ostream &out) const override {
-      out<< "[" << range << "]";
-    }
-  private:
-    int range;
-};
 
-class Dims : public AST {
+// class Dim : public AST {
+//   public:
+//     Dim(int inte):range(inte){}
+//     void printAST(std::ostream &out) const override {
+//       out<< "[" << range << "]";
+//     }
+//   private:
+//     int range;
+// };
+
+class Dims : public AST { //eisagontai anapoda ta dims opote prepei na ta diabazoume anapoda
   public:
     Dims(){}
-    void append(Dim * dim){
+    void append(int dim){
       dims.push_back(dim);
     }
-    void set_type(Dtype dt) {type=dt;}
     void printAST(std::ostream &out) const override {
-      for(const auto &s: dims ){
-        out << *s;
+      for(auto s: dims ){
+        out << "[" << s << "]";
       }
     }
+    bool operator != (Dims & d){
+      bool t=true;
+      if(dims.size()==d.length()) t=false;
+      return t;
+    }
+    int length(){
+      return dims.size();
+    }
+    bool empty(){
+      return dims.empty();
+    }
   private:
-    std::vector<Dim *> dims;
-    Dtype type;
+    std::vector<int> dims;
 };
 
 class Type : public AST{
   public: 
-    Type(Dtype typ, Dims* dms = nullptr):dtyp(typ),dims(dms) {}
+    Type(Dtype typ, Dims* dms ):dtyp(typ),dims(dms) {}
     void printAST(std::ostream &out) const override {
       if(dtyp==0) out << " int";
       else if(dtyp==1) out << " char";
@@ -67,6 +80,33 @@ class Type : public AST{
     }
     Dtype basic_type(){
       return dtyp;
+    }
+    bool operator == (Type  t){
+      printf("comparing 2 types\n");
+      bool f=false;
+      if(dtyp==t.dtyp){
+        f=true;}
+
+      if(dims->empty()){
+        std::cout<< "first arguements dims empty\n";
+        if(!t.dims->empty()) {
+          std::cout<< "type: " <<*this <<" not equal to type: " << t <<std::endl;
+          yyerror("");
+        }
+      }
+      else if(!dims->empty()){
+        std::cout<< "first arguements dims not empty\n";
+        if(t.dims->empty()) {
+          std::cout<< "type: " <<*this <<" not equal to type: " << t <<std::endl;
+          yyerror("");
+        }
+        if(*dims != *(t.dims))f=false;
+      }
+        
+      return f;
+    }
+    int dimensions (){
+      return dims->length();
     }
   private:
     Dtype dtyp;
@@ -80,11 +120,10 @@ class Expr : public AST {
   //virtual void printAST(std::ostream &out) const = 0;
   //virtual int eval() const = 0;
   void check_type(Dtype t){
-    sem();
     if(t!=exprtype->basic_type()) yyerror("type missmatch");
   }
   void set_type(Dtype t) {
-    exprtype= new Type(t);
+    exprtype= new Type(t,new Dims());
   }
   void set_typedims(Type* t){
     exprtype= t;
@@ -129,7 +168,6 @@ class Cond : public AST {
   public:
     virtual void printAST(std::ostream &out) const = 0;
   void check_type(Dtype t){
-    sem();
     if(t!=condtype) yyerror("type missmatch");
   }
   void set_type(Dtype t) {
@@ -143,6 +181,17 @@ class Cond : public AST {
 
 };
 
+class End :public Stmt{
+  public:
+  End(){
+  }
+  void printAST(std::ostream &out) const override {
+  }
+  void sem() override {
+
+  }
+};
+
 class If_then_else : public Stmt {
   public:
     If_then_else(Cond* con,Stmt * st1, Stmt* st2 =nullptr ): cond(con),stmt1(st1),stmt2(st2) {}
@@ -150,6 +199,11 @@ class If_then_else : public Stmt {
       out << "if: ->" << *cond <<"<- " <<" then => {\n" << *stmt1 <<"}\n" ;
       if(stmt2!=nullptr) out << " else => {\n"<< *stmt2 << "}\n";
     } 
+    void sem() override {
+      cond->sem();
+      stmt1->sem();
+      if(stmt2!=nullptr)stmt2->sem();
+    }
   private:
     Cond* cond;
     Stmt* stmt1;
@@ -162,6 +216,12 @@ class While_stmt : public Stmt {
     void printAST(std::ostream &out) const override {
       out << "while( " << *cond << " ) \n\r do {" << *stmt << "}\n";
     }
+    void sem() override {
+      printf("while cond sem\n");
+      cond->sem();
+      printf("while stmt sem\n");
+      stmt->sem();
+    }
   private:
     Cond* cond;
     Stmt* stmt;
@@ -173,6 +233,9 @@ class Return_stmt: public Stmt {
     void printAST(std::ostream &out) const override {
       if(expr != nullptr) out<< "return (" << *expr << ")";
       else out << " return nothing" ;
+    }
+    void sem() override{
+      expr->sem();
     }
   private:
     Expr* expr;
@@ -195,6 +258,7 @@ class Block : public Stmt {
     out << "}Block\n";
   }
   void sem() override{
+    std::cout<<"analyzing block " << *this <<std::endl;
     for(const auto &s : stmt_list){
       s->sem();
     }
@@ -213,13 +277,21 @@ class Exprc : public AST {
     }
     void printAST(std::ostream &out) const override {
       out << "parameters(";
-    bool first = true;
-    for (const auto &s : exprc) {
+      bool first = true;
+      for (const auto &s : exprc) {
       if (!first) out << ", ";
       first = false;
       out <<"(" <<*s << ")";
+      }
+      out << ")"; 
     }
-    out << ")"; 
+    std::vector <Type *> argtypes() {
+      std::vector< Type *> t;
+      for(const auto &s: exprc){
+        s->sem();
+        t.push_back(s->expr_type());
+      }
+      return t;
     }
   private:
     std::vector<Expr *> exprc;
@@ -232,6 +304,42 @@ class Func_call : public Expr , public Stmt{
       out << *Tid << "(" ;
       if(exprc!=nullptr) out << *exprc ;
       out << ")"; 
+    }
+    void sem() override{
+      const char *c = Tid->name();
+      std::vector<Type *> t ;
+      if(exprc!=nullptr)t= exprc->argtypes();
+      printf("read expression types vector\n");
+      STEntry* func = st.lookup(c);
+      if(func==nullptr)printf("cant find function %s to call\n",c );
+      else {
+        if(func->fun==nullptr){
+          std::cout << c;//tha eprepe na einai yyerror, prosthiki format sthn yyerror
+          yyerror("invalid function\n");
+        }
+        printf("found the function %s on st\n",c);
+        Type* typeit=*func->fun->arg.rbegin();
+        std::cout << *typeit <<std::endl;
+        auto exprs = t.rbegin();
+        auto expre = t.rend();
+        printf("starting to compare types of function %s arguements\n",c);
+        if(func->fun->arg.rbegin()==func->fun->arg.rend()) printf("empty type vector on funciton\n");
+        for(auto s = (func->fun->arg.rbegin()); s!=func->fun->arg.rend(); ++s){
+          if(*exprs == *expre) {
+            yyerror(" wrong arguements ");
+          }
+          if((**s)==(**exprs)) std::cout<< "correct arguement " << **s << " = " << **exprs << std::endl;
+          else {
+            std::cout<< "wrong arguement " << **s << " != " << **exprs << std::endl;
+            yyerror("wrong arguements");
+          }
+          exprs++;
+
+        // }
+        }
+      //lookup sto st gia to Tid->name();
+      }
+      printf(" valid function call\n");
     }
   private:
     Id* Tid;
@@ -251,12 +359,53 @@ class String_const : public AST{
 
 class L_value : public Expr {
   public:
-    L_value(Id* i):id(i){}
-    L_value(String_const* i):str(i){}
+    L_value(Id* i):id(i), str(nullptr){ }
+    L_value(String_const* i):str(i),id(nullptr){}
     void append_expr(Expr* ex){
       expr_list.push_back(ex);
     }
     void sem() override {
+      int i;
+      if(str!=nullptr){
+        Dims* d= new Dims();
+        d->append(0);
+        set_typedims(new Type(Type_char,d));
+        return;
+      }
+      const char *c=id->name();
+      STEntry * val = st.lookup(c);
+      if(val==nullptr){
+        printf("cant find the id %s on st\n",c);
+        yyerror("");
+      }
+      else {
+        if(val->var==nullptr) yyerror("invalid variable entry\n");
+        for(auto s:expr_list){
+          s->sem();
+          if(s->expr_btype()!=Type_int){
+            std::cout<< "expr :" << (*s) << " needs to have type int" << std::endl;
+            yyerror("");
+          }
+        }
+        // if(expr_list.size()!=val->var->type->dimensions()){
+          // std::cout<< "variable " << c << " has "<< val->var->type->dimensions() << " dimensions and we have " <<expr_list.size() << " expressions"<< std::endl;
+          // yyerror("");
+        // }
+        i=val->var->type->dimensions()-expr_list.size();
+        if(i<0){
+          std::cout << *this << "more dimensions than variable than variable " << c << "has \n"; 
+        }
+        else {
+          Dims* d = new Dims();
+          for(i; i>0 ; i--){
+            d->append(0);
+          }
+          set_typedims(new Type(val->var->type->basic_type(),d));
+        }
+        //set_type(val->var->type->basic_type());
+        std::cout<< "succesful varibale " << c << *(this->expr_type()) <<"lookup \n";
+      }
+      //printf("l_value sem\n");
     }
     void printAST(std::ostream &out) const override {
       if(id==nullptr) out << *str;
@@ -324,6 +473,8 @@ class BinOp : public Expr {
     else out << ", " << *exprr << ")";
     }
     void sem() override{
+      exprl->sem();
+      exprr->sem();
       exprl->check_type(Type_int);
       exprr->check_type(Type_int);
       set_type(Type_int);
@@ -392,6 +543,11 @@ class ComOp : public Cond {
       else out << op_s << "(" << *exprl << ", " << *exprr << ")";
     }
     void sem() override{
+      printf("ComOp left sem\n");
+      exprl->sem();
+      printf("ComOp right sem\n");
+      exprr->sem();
+      //prepei to exprl na exei typo opote prepei na ginei to lookup
       if(exprl->expr_btype()!=Type_char&&exprl->expr_btype()!=Type_int) yyerror("can't compare ");
       exprl->check_type(exprr->expr_btype());
       set_type(Type_bool);
@@ -426,7 +582,7 @@ class Id_list : public Local_def{
       }
     }
     void sem() override {
-      for(const auto &s : Idlist) s->sem();
+      for(auto s =Idlist.rbegin(); s!=Idlist.rend(); ++s) (*s)->sem();
     }
     void printAST(std::ostream &out) const override{
       bool i=false;
@@ -492,7 +648,7 @@ class Fpar_list : public Local_def {
     }
     void sem() override{
       //printf("entered par_list\n");
-      for(const auto &s : par_list) s->sem();
+      for(auto s =par_list.begin(); s!=par_list.end(); ++s) (*s)->sem();
     }
   private:
     std::vector<Fpar_def*> par_list;
@@ -556,8 +712,10 @@ class Function : public L_def {
       
       //printf("entered Function class sem\n");
       if(!st.check_empty()) {
-        //printf("st not empty");
+        printf("st not empty");
         header->namesem();
+        //header->sem();
+        st.stopfunc();
       }
       //printf("pushing scope");
       st.push_scope();
@@ -565,14 +723,18 @@ class Function : public L_def {
       //printf("header->sem\n");
       header->sem();
       st.stopfunc();
+      st.copyfun();
+      //st.copyfunc();
       //printf("fuction read\n");
-      i=st.scope_size()-1;
-      st.f_args(i);//diabazoume to megethos tou scope mexri tora kai to anathetoume sta argoumenet ths synarthshs
-      printf("function arguements read, number : %d\n", i);
+      st.f_args();//diabazoume to megethos tou scope mexri tora kai to anathetoume sta argoumenet ths synarthshs
+      //printf("function arguements read, number : %d\n", i);
+      //std::cout<< "def_list " << *def_list <<std::endl;
       def_list->sem();
+      printf("definitions of this function ended\n");
       printf("block->sem\n");
       block->sem();
-      st.pop_scope();
+      printf("popping scope\n");
+      if(!st.check_empty()) st.pop_scope();
     }
   private:
     Header* header;
@@ -586,6 +748,13 @@ class Valuation : public Stmt {
     Valuation(L_value * val, Expr* exp):expr(exp), var(val){}
     void printAST(std::ostream &out) const override {
       out << *var << " = " << *expr ;
+    }
+    void sem() override{
+      printf("starting valuation\n");
+      expr->sem();
+      var->sem();
+      var->check_type(expr->expr_btype());
+      printf("valuation sem\n");
     }
   private: 
     Expr* expr;
