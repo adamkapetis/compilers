@@ -92,7 +92,7 @@ class Scope {
     }
     //if(locals[tmp].fun==nullptr)printf("cant find function\n");
     locals[c].fun->arg.push_back(t);
-    std::cout << "inserted " << *t << "on " << c << "STEntry \n";
+    std::cout << "inserted " << *t << " on " << c << "STEntry \n";
   }
   char * getfunc(){
     return func;
