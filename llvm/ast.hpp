@@ -700,6 +700,30 @@ class BinOp : public Expr {
       exprr->check_type(Type_int);
       set_type(Type_int);
     }
+    llvm::Value* compile(){
+      llvm::Value *L = exprl->compile();
+      llvm::Value *R = exprr->compile();
+
+      if(!L || !R)
+          return nullptr;
+
+      if(op_s == nullptr) std::string str_op = std::string(op);
+      else std::string str_op = std::string(op_s);
+
+      if (str_op == "+")
+          return Builder.CreateAdd(L, R, "addtmp");
+      else if (str_op == "-")
+          return Builder.CreateSub(L, R, "subtmp");
+      else if (str_op == "*")
+          return Builder.CreateMul(L, R, "multmp");
+      else if (str_op == "div")
+          return Builder.CreateSDiv(L, R, "divtmp");
+      else if (str_op == "mod")
+          return Builder.CreateSRem(L, R, "modtmp");
+      else
+          return nullptr;
+    }
+
   private:
     Expr* exprl;
     Expr* exprr;
@@ -749,6 +773,9 @@ class LogOp : public Cond {
         }
       set_type(Type_bool);
     }
+
+    
+
   private:
     Cond* condl;
     char* op;
@@ -773,6 +800,24 @@ class ComOp : public Cond {
       exprl->check_type(exprr->expr_btype());
       set_type(Type_bool);
     }
+
+    llvm::Value* compile() const override {
+    llvm::Value* l = exprl->compile();
+    llvm::Value* r = exprr->compile();
+
+    if(op_s == nullptr) std::string str_op = std::string(op);
+      else std::string str_op = std::string(op_s);
+
+    if(str_op == "<") return Builder.CreateICmpSLT(l, r, "lttmp");
+    if(str_op == ">") return Builder.CreateICmpSGT(l, r, "gttmp");
+    if(str_op == "<=") return Builder.CreateICmpSLE(l, r, "ltetmp");
+    if(str_op == ">=") return Builder.CreateICmpSGE(l, r, "gtetmp");
+    if(str_op == "=") return Builder.CreateICmpEQ(l, r, "eqtmp");
+    if(str_op == "#") return Builder.CreateICmpNE(l, r, "netmp");
+
+    return nullptr;
+  }
+
   private:
     Expr* exprl;
     Expr* exprr;
