@@ -8,34 +8,25 @@
 #include <string.h>
 #include "lexer.hpp"
 
-#include <llvm/Config/llvm-config.h>
-
-#include <llvm/IR/Value.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Verifier.h>
 #include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/Function.h>
-
-#include <llvm/Support/raw_ostream.h>
+#include <llvm/IR/Value.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/IR/Attributes.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Scalar/GVN.h>
-
-#include "llvm/Analysis/BasicAliasAnalysis.h"
-#include "llvm/Analysis/TypeBasedAliasAnalysis.h"
-#include <llvm/Transforms/InstCombine/InstCombine.h>
 #include <llvm/Transforms/Utils.h>
-
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/MC/TargetRegistry.h"
-#include "llvm/TargetParser/Host.h"
-
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Support/ErrorHandling.h"
+#include <llvm/MC/TargetRegistry.h>
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/Host.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
+#include <llvm/IR/Constant.h>
+#include <llvm/IR/GlobalVariable.h>
 
 //using namespace llvm;
 
@@ -46,6 +37,22 @@ class AST {
     virtual void sem() {}
     virtual void printAST(std::ostream &out) const = 0;
     virtual llvm::Value *compile() { return nullptr; }
+
+    llvm::Function *MainCodeGen(llvm::Value* main_function)
+    {   
+        // Create and add entry point for main function
+        llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+        llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
+
+        // Create the basic block for the main function
+        llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+        Builder.SetInsertPoint(BB);
+
+        //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
+        Builder.CreateRet(c64(0));
+
+        return main;
+    }
 
     void llvm_compile_and_dump(bool optimize=true) {
       // Initialize
@@ -103,12 +110,43 @@ class AST {
       llvm::FunctionType *strcat_type = llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
       TheStrcat = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", TheModule.get());
 
+      // llvm::Value *main_function = compile();
+      // llvm::Function *main = MainCodeGen(main_function);
 
+      // Emit the program code
+      // llvm::Value *main_function = compile(); //grafei ola ton kodika tou programmatos  
 
+      // Define and start the main function
+      llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+      llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
+      
+      llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+      Builder.SetInsertPoint(BB);
 
+      //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
+      Builder.CreateRet(c64(0));
+
+      llvm::Value *main_function = compile();
+
+      // Verify the IR.
+      bool bad = verifyModule(*TheModule, &llvm::errs());
+      if (bad)
+      {
+          std::cerr << "The IR is bad!" << std::endl;
+          TheModule->print(llvm::errs(), nullptr);
+          std::exit(1);
+      }
+
+      // Optimizer
+      TheFPM->run(*main);
+
+      // Print out the IR.
+      TheModule->print(llvm::outs(), nullptr);
+      
 
 
       }
+    static std::unique_ptr<llvm::Module> TheModule;
 
   protected:
     static llvm::LLVMContext TheContext;
@@ -153,34 +191,34 @@ class AST {
       return llvm::ConstantInt::get(TheContext, llvm::APInt(64, n, true));
     }
 
-    static llvm::Type* parse_type(Type t, std::vector<int> dim_sizes=std::vector<int>(), bool ref=false) {
-      llvm::ArrayType * at;
+    // static llvm::Type* parse_type(Type t, std::vector<int> dim_sizes=std::vector<int>(), bool ref=false) {
+    //   llvm::ArrayType * at;
 
-      if (!dim_sizes.empty()) {
-        for(auto it = dim_sizes.rbegin(); it != dim_sizes.rend(); ++it) {
-          if (*it == 0) *it = 64;
+    //   if (!dim_sizes.empty()) {
+    //     for(auto it = dim_sizes.rbegin(); it != dim_sizes.rend(); ++it) {
+    //       if (*it == 0) *it = 64;
 
-          if(it == dim_sizes.rbegin()) {
-            if (t == 2)
-              at = llvm::ArrayType::get(i32, *it);
-            else
-              at = llvm::ArrayType::get(i8, *it);
-          }
-          else
-            at = llvm::ArrayType::get(at, *it);
-        }
-      }
+    //       if(it == dim_sizes.rbegin()) {
+    //         if (t == 2)
+    //           at = llvm::ArrayType::get(i32, *it);
+    //         else
+    //           at = llvm::ArrayType::get(i8, *it);
+    //       }
+    //       else
+    //         at = llvm::ArrayType::get(at, *it);
+    //     }
+    //   }
 
 
-      switch(t) {
-        case 0: return ref ? llvm::PointerType::get(i32, 0) : i32;
-        case 1: return ref ? llvm::PointerType::get(i8, 0) : i8;
-        case 2: if(ref) return llvm::PointerType::get(i32, 0); else return at;  /////!array
-        case 3: if(ref) return llvm::PointerType::get(i8, 0); else return at;  /////!array
-        case 5: return llvm::Type::getVoidTy(TheContext);
-        default: return nullptr;
-      }
-    }
+    //   switch(t) {
+    //     case 0: return ref ? llvm::PointerType::get(i32, 0) : i32;
+    //     case 1: return ref ? llvm::PointerType::get(i8, 0) : i8;
+    //     case 2: if(ref) return llvm::PointerType::get(i32, 0); else return at;  /////!array
+    //     case 3: if(ref) return llvm::PointerType::get(i8, 0); else return at;  /////!array
+    //     case 5: return llvm::Type::getVoidTy(TheContext);
+    //     default: return nullptr;
+    //   }
+    // }
 
     static llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, const llvm::StringRef &VarName, llvm::Type *VarType) {
       llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
@@ -197,7 +235,7 @@ class AST {
 
 
 
-};  
+
 
 inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
   ast.printAST(out);

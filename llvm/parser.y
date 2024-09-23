@@ -107,7 +107,7 @@ SymbolTable st;
 program: 
     func_def	                            { std::cout << "AST : " << *$1 << std::endl ;
                                             $1->sem(); 
-                                            $1->llvm_compline_and_dump();
+                                            $1->llvm_compile_and_dump();
                                             //delete $1;
                                             }
 ;

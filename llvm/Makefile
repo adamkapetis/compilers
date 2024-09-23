@@ -4,7 +4,7 @@ LLVMCONFIG=llvm-config
 
 CXX=clang++
 
-CXXFLAGS=-g `$(LLVMCONFIG) --cxxflags` -std=c++20 -fexceptions
+CXXFLAGS=-g `$(LLVMCONFIG) --cxxflags` 
 LDFLAGS=`$(LLVMCONFIG) --ldflags --system-libs --libs all`
 
 default: gracec
@@ -21,7 +21,7 @@ else
 	bison -dv -o parser.cpp parser.y
 endif
 
-parser.o: parser.cpp lexer.hpp symbol.hpp ast.hpp
+parser.o: parser.cpp lexer.hpp symbol.hpp ast.hpp 
 
 gracec: lexer.o parser.o ast.o
 	$(CXX) $(CXXFLAGS) -o gracec $^ $(LDFLAGS)
