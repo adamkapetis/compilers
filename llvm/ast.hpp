@@ -53,6 +53,10 @@ class AST {
 
         return main;
     }
+    llvm::Value* LogErrorV(const char *Str) const{
+      fprintf(stderr, "Error: %s\n", Str);
+      return nullptr;
+      }
 
     void llvm_compile_and_dump(bool optimize=true) {
       // Initialize
@@ -774,7 +778,69 @@ class LogOp : public Cond {
       set_type(Type_bool);
     }
 
-    
+    llvm::Value* compile()
+{
+    llvm::Value *L = nullptr;
+    llvm::Value *R = nullptr;
+    std::string opStr = std::string(op);
+
+    // Not
+    if (condr == nullptr) {
+        L = condl->compile();
+        if (!L) 
+            return nullptr;
+
+        if (opStr == "not")
+            return Builder.CreateNot(L, "nottemp");
+        else
+            return LogErrorV("Invalid unary operator in opcond");
+    }
+    // And, Or
+    else {
+        L = condl->compile();
+        if (!L)
+            return nullptr;
+
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+        llvm::BasicBlock *EvaluateRightBB = llvm::BasicBlock::Create(TheContext, "evalright", TheFunction);
+        llvm::BasicBlock *SkipRightBB = llvm::BasicBlock::Create(TheContext, "skipright", TheFunction);
+        llvm::BasicBlock *CurrentBB = Builder.GetInsertBlock();
+
+        if (opStr == "and")
+            Builder.CreateCondBr(L, EvaluateRightBB, SkipRightBB);
+        else if (opStr == "or")
+            Builder.CreateCondBr(L, SkipRightBB, EvaluateRightBB);
+        else
+            return LogErrorV("Invalid binary operator in opcond");
+
+        // Set insertion point to 'EvaluateRightBB' and compile the right condition if necessary
+        Builder.SetInsertPoint(EvaluateRightBB);
+        R = right->compile();
+        if (!R)
+            return nullptr;
+
+        // Get the result of the binary operation
+        llvm::Value *Result = nullptr;
+        if (opStr == "and")
+            Result = Builder.CreateAnd(L, R, "andtemp");
+        else if (opStr == "or")
+            Result = Builder.CreateOr(L, R, "ortemp");
+
+        llvm::BasicBlock *AfterRightBB = Builder.GetInsertBlock();
+        Builder.CreateBr(SkipRightBB);
+
+        // Set insertion point to 'SkipRightBB'
+        Builder.SetInsertPoint(SkipRightBB);
+        // Create PHI node to select the correct result
+        llvm::PHINode *PhiNode = Builder.CreatePHI(L->getType(), 2, "result");
+        
+        // Add incoming value from the current block (left condition result)
+        PhiNode->addIncoming(L, CurrentBB);
+        // Add incoming value from the block after evaluating the right condition
+        PhiNode->addIncoming(Result, AfterRightBB);
+
+        return PhiNode;
+    }
 
   private:
     Cond* condl;
