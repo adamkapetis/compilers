@@ -7,6 +7,7 @@
 #include <map>
 #include <string.h>
 #include "lexer.hpp"
+#include "symbol.hpp"
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -338,7 +339,7 @@ class Type : public AST{
     Dims* dims;
 };
 
-#include "symbol.hpp"
+
 
 class Expr : public AST {
  public:
@@ -487,6 +488,17 @@ class Block : public Stmt {
     for(const auto &s : stmt_list){
       s->sem();
     }
+  }
+  virtual llvm::Value* compile() override {
+
+    for(Stmt *s: stmt_list) { //maybe reverse list (not needed)
+      // if(s == nullptr) continue;
+      s->compile();
+
+      if (dynamic_cast<Return *> (s)) //maybe not needed
+            break;
+    }
+    return nullptr;
   }
  private:
   std::vector<Stmt *> stmt_list;
@@ -665,6 +677,10 @@ class Int_const : public Expr {
     void sem() override {
       set_type(Type_int);
     }
+    virtual llvm::Value* compile() override {
+      return c64(num);
+    }
+
     int eval() {
       return num;
     }
@@ -681,6 +697,10 @@ class Char_const : public Expr {
     void sem() override {
       set_type(Type_char);
     }
+    virtual llvm::Value* compile() override{
+       return c8(var);
+    }
+
   private:
   char var;
 };
@@ -704,7 +724,7 @@ class BinOp : public Expr {
       exprr->check_type(Type_int);
       set_type(Type_int);
     }
-    llvm::Value* compile(){
+    virtual llvm::Value* compile() override {
       llvm::Value *L = exprl->compile();
       llvm::Value *R = exprr->compile();
 
@@ -778,8 +798,7 @@ class LogOp : public Cond {
       set_type(Type_bool);
     }
 
-    llvm::Value* compile()
-{
+    virtual llvm::Value* compile() override{
     llvm::Value *L = nullptr;
     llvm::Value *R = nullptr;
     std::string opStr = std::string(op);
@@ -867,7 +886,7 @@ class ComOp : public Cond {
       set_type(Type_bool);
     }
 
-    llvm::Value* compile() const override {
+    virtual llvm::Value* compile() override {
     llvm::Value* l = exprl->compile();
     llvm::Value* r = exprr->compile();
 
@@ -1087,6 +1106,18 @@ class Valuation : public Stmt {
       var->sem();
       var->check_type(expr->expr_btype());
       printf("valuation sem\n");
+    }
+    virtual llvm::Value * compile() override {
+      llvm::Value *LValAddr = var->compile_ptr();
+      if (!LValAddr)
+          return LogErrorV("Valuation: LValue(var) could not be compiled.");
+
+      llvm::Value * ExprValue = expr->compile();
+      if (!ExprValue)
+          return LogErrorV("Valuation: Expression(expr) could not be compiled.");
+
+      Builder.CreateStore(ExprValue, LValAddr);
+      return nullptr;
     }
   private: 
     Expr* expr;

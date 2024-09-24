@@ -162,7 +162,7 @@ var_def:
     "var" T_id td ':' type ';'              { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/$3->append(new Id($2));$$=new Var_def($3,$5);/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
 ;
 stmt:
-    ';'                                     { $$=new End();}
+    ';'                                     { $$=new End();} //maybe put $$ = nullptr;
 |   l_value "<-" expr ';'                   { $$=new Valuation($1,$3);/* std::cout << *$$;      */}//{$1=new L_value();$$=new Valuation($1,$3);}
 |   block                                   { $$=$1;                        } // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           { $$=$1;                        }
