@@ -49,7 +49,7 @@ class AST {
         llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
         Builder.SetInsertPoint(BB);
 
-        //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
+        Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
         Builder.CreateRet(c64(0));
 
         return main;
@@ -115,24 +115,26 @@ class AST {
       llvm::FunctionType *strcat_type = llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
       TheStrcat = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", TheModule.get());
 
-      //llvm::Value *main_function = compile();
-      //llvm::Function *main = MainCodeGen(main_function);
+      llvm::Value *main_function = compile();
+      llvm::Function *main = MainCodeGen(main_function);
 
       // Emit the program code
       // llvm::Value *main_function = compile(); //grafei ola ton kodika tou programmatos  
 
       // Define and start the main function
-      llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
-      llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
+      // llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+      // llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
       
-      llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
-      Builder.SetInsertPoint(BB);
+      // llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+      // Builder.SetInsertPoint(BB);
 
       //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
-      Builder.CreateRet(c64(0));
+      
 
-      llvm::Value *main_function = compile();
+      // llvm::Value *main_function = compile();
+      // compile();
 
+      // Builder.CreateRet(c64(0));
       // Verify the IR.
       bool bad = verifyModule(*TheModule, &llvm::errs());
       if (bad)
@@ -805,6 +807,7 @@ class BinOp : public Expr {
       if(op_s == nullptr) {
         //std::string str_op = std::string(op);
         str_op.push_back(op);
+        
       }
       else 
         str_op = std::string(op_s);
@@ -1176,7 +1179,7 @@ class Function : public L_def {
 
     // First compile the header
     // llvm::Function *function = header -> compile();
-    llvm::Type *intType = llvm::Type::getInt32Ty(TheContext);
+    llvm::Type *intType = llvm::Type::getInt64Ty(TheContext);
     llvm::FunctionType *funcType = llvm::FunctionType::get(intType, false); // No arguments
     llvm::Function *function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "simpleFunction", TheModule.get());
 
