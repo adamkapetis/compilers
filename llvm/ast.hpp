@@ -247,7 +247,7 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
   return out;
 }
 
-#include "symbol.hpp"
+
 
 class Stmt : public AST {
   
@@ -340,6 +340,7 @@ class Type : public AST{
 };
 
 
+#include "symbol.hpp"
 
 class Expr : public AST {
  public:
@@ -563,8 +564,8 @@ class Block : public Stmt {
       // if(s == nullptr) continue;
       s->compile();
 
-      if (dynamic_cast<Return *> (s)) //maybe not needed
-            break;
+      // if (dynamic_cast<Return *> (s)) //maybe not needed
+      //       break;
     }
     return nullptr;
   }
@@ -854,7 +855,7 @@ class LogOp : public Cond {
       if(condl == nullptr){
         out << " not (" << *condr << ")";
       }
-      else if (op == "or"){
+      else if (strcmp(op,"or") == 0){
         out << "(" << *condl << ") or (" << *condr << ")";
       }
       else { 
@@ -907,7 +908,7 @@ class LogOp : public Cond {
 
         // Set insertion point to 'EvaluateRightBB' and compile the right condition if necessary
         Builder.SetInsertPoint(EvaluateRightBB);
-        R = right->compile();
+        R = condr->compile();
         if (!R)
             return nullptr;
 
@@ -933,6 +934,7 @@ class LogOp : public Cond {
 
         return PhiNode;
     }
+  }
 
   private:
     Cond* condl;
@@ -963,8 +965,14 @@ class ComOp : public Cond {
     llvm::Value* l = exprl->compile();
     llvm::Value* r = exprr->compile();
 
-    if(op_s == nullptr) std::string str_op = std::string(op);
-      else std::string str_op = std::string(op_s);
+    std::string str_op;
+
+    if(op_s == nullptr) {
+      //std::string str_op = std::string(op);
+      str_op.push_back(op);
+    }
+    else 
+      str_op = std::string(op_s);
 
     if(str_op == "<") return Builder.CreateICmpSLT(l, r, "lttmp");
     if(str_op == ">") return Builder.CreateICmpSGT(l, r, "gttmp");
@@ -1116,7 +1124,7 @@ class Var_def : public L_def {
     void printAST(std::ostream &out) const override {
       out << "var [" << *id_list << " - type:" << *type<< "]";
     }
-    void sem(){
+    void sem() override {
       id_list->id_type(type);
       id_list->sem();
     }
@@ -1181,15 +1189,15 @@ class Valuation : public Stmt {
       printf("valuation sem\n");
     }
     virtual llvm::Value * compile() override {
-      llvm::Value *LValAddr = var->compile_ptr();
-      if (!LValAddr)
-          return LogErrorV("Valuation: LValue(var) could not be compiled.");
+      // llvm::Value *LValAddr = var->compile_ptr();
+      // if (!LValAddr)
+      //     return LogErrorV("Valuation: LValue(var) could not be compiled.");
 
-      llvm::Value * ExprValue = expr->compile();
-      if (!ExprValue)
-          return LogErrorV("Valuation: Expression(expr) could not be compiled.");
+      // llvm::Value * ExprValue = expr->compile();
+      // if (!ExprValue)
+      //     return LogErrorV("Valuation: Expression(expr) could not be compiled.");
 
-      Builder.CreateStore(ExprValue, LValAddr);
+      // Builder.CreateStore(ExprValue, LValAddr);
       return nullptr;
     }
   private: 
