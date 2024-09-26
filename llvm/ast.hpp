@@ -115,23 +115,23 @@ class AST {
       llvm::FunctionType *strcat_type = llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
       TheStrcat = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", TheModule.get());
 
-      // llvm::Value *main_function = compile();
-      // llvm::Function *main = MainCodeGen(main_function);
+      llvm::Value *main_function = compile();
+      llvm::Function *main = MainCodeGen(main_function);
 
       // Emit the program code
       // llvm::Value *main_function = compile(); //grafei ola ton kodika tou programmatos  
 
       // Define and start the main function
-      llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
-      llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
+      // llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+      // llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
       
-      llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
-      Builder.SetInsertPoint(BB);
+      // llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+      // Builder.SetInsertPoint(BB);
 
-      //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
-      Builder.CreateRet(c64(0));
+      // //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
+      // Builder.CreateRet(c64(0));
 
-      llvm::Value *main_function = compile();
+      // llvm::Value *main_function = compile();
 
       // Verify the IR.
       bool bad = verifyModule(*TheModule, &llvm::errs());
@@ -1168,6 +1168,12 @@ class Function : public L_def {
       printf("popping scope\n");
       if(!st.check_empty()) st.pop_scope();
     }
+
+  virtual llvm::Function* compile() override {
+
+    
+
+  } 
   private:
     Header* header;
     Def_list* def_list;

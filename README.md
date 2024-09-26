@@ -33,4 +33,5 @@ When creating the Makefile don't nail your parameters. Use `llvm-config` so that
     LDFLAGS=`$(LLVMCONFIG) --ldflags --system-libs --libs all`
 ```
 
-
+To test that everything runs use `make` and then:
+``` ./gracec < ../grace_programs/hanoi.grc```
