@@ -65,7 +65,8 @@ class Scope {
   }
   void insertf(const char* c, Dtype t) {
     if (locals.count(c)!=(unsigned long)0){
-      printf("problem with %s and map size is %d, bsort exists %d times\n ",c,locals.size(),locals.count(c));
+      //printf("problem with %s and map size is %d, bsort exists %d times\n ",c,locals.size(),locals.count(c));
+      printf("problem with %s and map size is %lu, bsort exists %lu times\n ",c,locals.size(),locals.count(c));
       yyerror("Duplicate variable declaration");}
     locals[c] = STEntry(new FUNEntry(t));
     func = new char[strlen(c)+1];

@@ -7,7 +7,7 @@
 #include <map>
 #include <string.h>
 #include "lexer.hpp"
-#include "symbol.hpp"
+
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -247,7 +247,7 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
   return out;
 }
 
-
+#include "symbol.hpp"
 
 class Stmt : public AST {
   
@@ -431,42 +431,32 @@ class If_then_else : public Stmt {
       if(stmt2!=nullptr)stmt2->sem();
     }
     virtual llvm::Value* compile() override {
-      // Compile condition
+
       llvm::Value *v = cond->compile();
-  
-      // Get the current function
+
       llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
-  
-      // Create basic blocks for 'then', 'else', and 'endif' sections
+
       llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(TheContext, "then", TheFunction);
       llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(TheContext, "else", TheFunction);
       llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endif", TheFunction);
-  
-      // Create a conditional branch based on the condition value
+
       Builder.CreateCondBr(v, ThenBB, ElseBB);
-  
-      // Set insertion point to 'then' block and compile the 'then' statement
+
       Builder.SetInsertPoint(ThenBB);
       if (stmt1 != nullptr)
           stmt1->compile();
-  
-      // Create a branch to 'endif' block if 'then' block has no terminator
+
       if (!Builder.GetInsertBlock()->getTerminator())
           Builder.CreateBr(AfterBB); 
-  
-      // Set insertion point to 'else' block and compile the 'else' statement
+
       Builder.SetInsertPoint(ElseBB);
       if (stmt2 != nullptr)
           stmt2->compile();
-  
-      // Create a branch to 'endif' block if 'else' block has no terminator
+
       if (!Builder.GetInsertBlock()->getTerminator())
           Builder.CreateBr(AfterBB);
-  
-      // Set insertion point to 'endif' block
       Builder.SetInsertPoint(AfterBB);
-  
-      // Return nullptr since an if statement does not produce a value
+
       return nullptr;
     }
 
@@ -490,43 +480,30 @@ class While_stmt : public Stmt {
       stmt->sem();
     }
     virtual llvm::Value* compile() override{
-      // Get the current function
+
       llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
 
-      // Create basic blocks for the loop condition, loop body, and after the loop
       llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, "while_loop", TheFunction);
       llvm::BasicBlock *BodyBB = llvm::BasicBlock::Create(TheContext, "while_body", TheFunction);
       llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endwhile", TheFunction);
 
-      // Branch to the loop block
       Builder.CreateBr(LoopBB);
 
-      // Set the insertion point to the loop condition block
       Builder.SetInsertPoint(LoopBB);
 
-      // Compile the loop condition
       llvm::Value *CondV = cond->compile();
 
-      /* Create a conditional branch based on the condition value
-       * If the condition is true, branch to the loop body block
-       * If the condition is false, branch to the block after the loop */
       Builder.CreateCondBr(CondV, BodyBB, AfterBB);
-
-      // Set the insertion point to the loop body block
       Builder.SetInsertPoint(BodyBB);
 
-      // Compile the statement inside the loop body
       stmt->compile();
 
-      // If the body block does not already have a terminator, create a branch back to the loop condition block
+      // Maybe skip this if(not necessary)
       if (!Builder.GetInsertBlock()->getTerminator())
-          // Branch back to the loop block
           Builder.CreateBr(LoopBB);
 
-      // Set the insertion point to the block after the loop
       Builder.SetInsertPoint(AfterBB);
 
-      // Return nullptr since a while loop does not produce a value
       return nullptr;
     }
 
@@ -545,6 +522,14 @@ class Return_stmt: public Stmt {
     }
     void sem() override{
       expr->sem();
+    }
+    virtual llvm::Value *compile() override{
+      if (expr != nullptr)
+          Builder.CreateRet(expr->compile());
+      else
+          Builder.CreateRetVoid();
+
+      return nullptr;
     }
   private:
     Expr* expr;
@@ -813,9 +798,14 @@ class BinOp : public Expr {
 
       if(!L || !R)
           return nullptr;
+      std::string str_op;
 
-      if(op_s == nullptr) std::string str_op = std::string(op);
-      else std::string str_op = std::string(op_s);
+      if(op_s == nullptr) {
+        //std::string str_op = std::string(op);
+        str_op.push_back(op);
+      }
+      else 
+        str_op = std::string(op_s);
 
       if (str_op == "+")
           return Builder.CreateAdd(L, R, "addtmp");
