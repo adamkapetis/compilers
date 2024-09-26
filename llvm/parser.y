@@ -166,7 +166,7 @@ stmt:
 |   l_value "<-" expr ';'                   { $$=new Valuation($1,$3);/* std::cout << *$$;      */}//{$1=new L_value();$$=new Valuation($1,$3);}
 |   block                                   { $$=$1;                        } // kalytera to block sto stmtd kai merge ton 2 block
 |   func_call ';'                           { $$=$1;                        }
-|   "if" cond "then" stmt "else" stmt       { $$=new If_then_else($2,$4,$6);}
+|   "if" cond "then" stmt "else" stmt       { $$=new If_then_else($2,$4,$6); }
 |   "if" cond "then" stmt                   { $$=new If_then_else($2,$4);   }
 |   "while" cond "do" stmt                  { $$=new While_stmt($2,$4);     }
 |   "return" expr ';'                       { $$=new Return_stmt($2);       }

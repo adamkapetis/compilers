@@ -1415,7 +1415,7 @@ yyreduce:
 
   case 30: /* stmt: "if" cond "then" stmt "else" stmt  */
 #line 169 "parser.y"
-                                            { (yyval.stmt)=new If_then_else((yyvsp[-4].cond),(yyvsp[-2].stmt),(yyvsp[0].stmt));}
+                                            { (yyval.stmt)=new If_then_else((yyvsp[-4].cond),(yyvsp[-2].stmt),(yyvsp[0].stmt)); }
 #line 1420 "parser.cpp"
     break;
 

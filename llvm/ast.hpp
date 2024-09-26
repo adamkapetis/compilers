@@ -115,23 +115,23 @@ class AST {
       llvm::FunctionType *strcat_type = llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
       TheStrcat = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", TheModule.get());
 
-      llvm::Value *main_function = compile();
-      llvm::Function *main = MainCodeGen(main_function);
+      //llvm::Value *main_function = compile();
+      //llvm::Function *main = MainCodeGen(main_function);
 
       // Emit the program code
       // llvm::Value *main_function = compile(); //grafei ola ton kodika tou programmatos  
 
       // Define and start the main function
-      // llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
-      // llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
+      llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+      llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
       
-      // llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
-      // Builder.SetInsertPoint(BB);
+      llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+      Builder.SetInsertPoint(BB);
 
-      // //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
-      // Builder.CreateRet(c64(0));
+      //Builder.CreateCall(llvm::dyn_cast<llvm::Function>(main_function));
+      Builder.CreateRet(c64(0));
 
-      // llvm::Value *main_function = compile();
+      llvm::Value *main_function = compile();
 
       // Verify the IR.
       bool bad = verifyModule(*TheModule, &llvm::errs());
@@ -143,7 +143,7 @@ class AST {
       }
 
       // Optimizer
-      TheFPM->run(*main);
+      //TheFPM->run(*main);
 
       // Print out the IR.
       TheModule->print(llvm::outs(), nullptr);
@@ -747,6 +747,7 @@ class Int_const : public Expr {
       set_type(Type_int);
     }
     virtual llvm::Value* compile() override {
+      std::cout << num << std::endl;
       return c64(num);
     }
 
@@ -1170,14 +1171,32 @@ class Function : public L_def {
     }
 
   virtual llvm::Function* compile() override {
+    // Get the insertion point of the previous function.
+    llvm::BasicBlock *BB_ofAbovelvelFunc = Builder.GetInsertBlock();
 
-    
+    // First compile the header
+    // llvm::Function *function = header -> compile();
+    llvm::Type *intType = llvm::Type::getInt32Ty(TheContext);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(intType, false); // No arguments
+    llvm::Function *function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "simpleFunction", TheModule.get());
+
+
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", function);
+    Builder.SetInsertPoint(BB);
+
+    block -> compile();
+
+    Builder.SetInsertPoint(BB_ofAbovelvelFunc);
+
+    return function;
 
   } 
   private:
     Header* header;
     Def_list* def_list;
     Block* block;
+
+
 
 };
 

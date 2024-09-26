@@ -1,5 +1,20 @@
-fun hello () : nothing 
-var x : int;
+fun hello () : int
+$var changed : int;
 {
-   x = 2 + 2; 
+   if 1 > 0 then {
+    return 10;
+    }
+    return 11;
+
+    while 11 < 10 do {
+        return 12;
+    }
+
+    if 1 > 0 then {
+    return 10;
+    }
+    else {
+        return 11; 
+    }
+
 }
