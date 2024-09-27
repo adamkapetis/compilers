@@ -39,7 +39,7 @@ class AST {
     virtual void printAST(std::ostream &out) const = 0;
     virtual llvm::Value *compile() { return nullptr; }
 
-    llvm::Function *MainCodeGen(llvm::Value* main_function)
+    llvm::Function *init_compile(llvm::Value* main_function)
     {   
         // Create and add entry point for main function
         llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
@@ -58,6 +58,20 @@ class AST {
       fprintf(stderr, "Error: %s\n", Str);
       return nullptr;
       }
+      llvm::Type* getLLVMType(Type* type, llvm::LLVMContext& context) {
+          switch (type->basic_type()) {
+              case Type_int:
+                  return llvm::Type::getInt64Ty(context);  
+              case Type_char:
+                  return llvm::Type::getInt8Ty(context);   
+              case Type_bool:
+                  return llvm::Type::getInt1Ty(context);  
+              case Type_void:
+                  return llvm::Type::getVoidTy(context);   
+              default:
+                  return nullptr;  //maybe put reference or arrays
+          }
+      }     
 
     void llvm_compile_and_dump(bool optimize=true) {
       // Initialize
@@ -116,13 +130,13 @@ class AST {
       TheStrcat = llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", TheModule.get());
 
       llvm::Value *main_function = compile();
-      llvm::Function *main = MainCodeGen(main_function);
+      llvm::Function *main = init_compile(main_function);
 
       // Emit the program code
       // llvm::Value *main_function = compile(); //grafei ola ton kodika tou programmatos  
 
       // Define and start the main function
-      // llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
+      // llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); 
       // llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
       
       // llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
@@ -389,6 +403,21 @@ class Id : public Expr {
       //printf("inserting function %s\n", id);
       st.insertf(id ,expr_btype()); // eisagoume mono onoma kai afou eisaxthoun oi metablhtes prosthetoume poses einai
     }
+
+    virtual llvm::Value* compile() override {
+      // psaxno gia tin metabliti
+      llvm::Value* LValAddr = NamedValues[id] //maybe search in stack frame
+      if (!LValAddr) {
+        std::string msg = "Unknown variable name: " + std::string(id) + ".";
+        return LogErrorV(msg.c_str());
+      }
+      DType varType = expr_btype();  
+      llvm::Type* llvmVarType = getLLVMType(varType, TheContext);  
+      // maybe ad for reference
+      return Builder.CreateLoad(getLLVMType(type, TheContext), LValAddr);
+
+    }
+
   private:
   const char* id;
 };
@@ -661,6 +690,17 @@ class String_const : public AST{
     void printAST(std::ostream &out) const override {
       out << "[string: " << str <<"]"; 
     }
+
+  virtual llvm::Value* compile() override{
+    llvm::Value *strValue = Builder.CreateGlobalStringPtr(llvm::StringRef(str), "strconst");
+    if (!strValue)
+    {
+        std::string msg = "Error while compiling String_Cosnt: " + str + ".";
+        return LogErrorV(msg.c_str());
+    }
+    return strValue;
+
+  }
   private:
   char* str;
 };
@@ -722,6 +762,52 @@ class L_value : public Expr {
         out<< "[ "<<*s<<" ]";
       }
     }
+
+  virtual llvm::Value* compile() override {
+
+    llvm::Value* result = nullptr;
+
+    // Case 1: The L_value is an identifier
+    if (id != nullptr) {
+        if (!expr_list.empty()) {
+            std::vector<llvm::Value*> offsets;
+            llvm::Type* elementType;
+
+            for (Expr* expr : expr_list) {
+                llvm::Value* compiledExpr = expr->compile();
+                if (!compiledExpr) {
+                    return LogErrorV("Error compiling index expression.");
+                }
+                offsets.push_back(compiledExpr);
+            }
+
+            result = id->compile_arr(&offsets, &elementType);
+            if (!result) {
+                return LogErrorV("Error compiling array element address.");
+            }
+
+            result = Builder.CreateGEP(elementType, result, offsets);
+
+        } else {
+            result = id->compile_ptr();
+        }
+    }
+    // Case 2: The L_value is a string constant
+    else if (str != nullptr) {
+
+        result = str->compile();
+        if (!result) {
+            return LogErrorV("Error compiling string constant.");
+        }
+    }
+    if (!expr_list.empty() && result) {
+        llvm::Type* elementType = getLLVMType(expr_type(), TheContext); // Determine the element type
+        result = Builder.CreateLoad(elementType, result);  // Load the value at the computed address
+    }
+
+    return result;
+}
+
   private:
     Id* id;
     String_const * str;
@@ -807,7 +893,7 @@ class BinOp : public Expr {
       if(op_s == nullptr) {
         //std::string str_op = std::string(op);
         str_op.push_back(op);
-        
+
       }
       else 
         str_op = std::string(op_s);
