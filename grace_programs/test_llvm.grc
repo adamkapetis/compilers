@@ -1,0 +1,11 @@
+fun hello () : int
+var changed : int;
+var adam : char;
+var a : int[5];
+var d : int;
+{
+    d <- 5;
+    changed <- d+1;
+    adam <- 'a';
+    
+}

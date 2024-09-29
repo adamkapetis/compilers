@@ -58,12 +58,22 @@ class AST {
       fprintf(stderr, "Error: %s\n", Str);
       return nullptr;
       }
-      llvm::Type* getLLVMType(Type* type, llvm::LLVMContext& context) {
-          switch (type->basic_type()) {
+      llvm::Type* getLLVMType(Dtype type, llvm::LLVMContext& context, int size) {
+          switch (type) {
               case Type_int:
-                  return llvm::Type::getInt64Ty(context);  
+                  printf("THe size of the array is %d\n",size);
+                  if (size > 1) {
+                    
+                    return llvm::ArrayType::get(llvm::Type::getInt64Ty(context), size);
+                  }
+                  else
+                    return llvm::Type::getInt64Ty(context);  
               case Type_char:
-                  return llvm::Type::getInt8Ty(context);   
+                if (size > 1) {
+                    return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), size);
+                  }
+                  else
+                    return llvm::Type::getInt8Ty(context);   
               case Type_bool:
                   return llvm::Type::getInt1Ty(context);  
               case Type_void:
@@ -303,6 +313,9 @@ class Dims : public AST { //eisagontai anapoda ta dims opote prepei na ta diabaz
     int length(){
       return dims.size();
     }
+    int dimI(int i){
+      return dims[i];
+    }
     bool empty(){
       return dims.empty();
     }
@@ -319,6 +332,9 @@ class Type : public AST{
       else if(dtyp==2) out << " bool";
       else out << " void";
       if(dims != nullptr) out << *dims ;
+    }
+    int array_dim(int dimnum) {
+      return dims->dimI(dimnum);
     }
     Dtype basic_type(){
       return dtyp;
@@ -405,16 +421,21 @@ class Id : public Expr {
     }
 
     virtual llvm::Value* compile() override {
+      printf("i am in the id \n");
       // psaxno gia tin metabliti
-      llvm::Value* LValAddr = NamedValues[id] //maybe search in stack frame
+      std::string name = std::string(id);
+      llvm::Value* LValAddr = NamedValues[name]; //maybe search in stack frame
       if (!LValAddr) {
         std::string msg = "Unknown variable name: " + std::string(id) + ".";
         return LogErrorV(msg.c_str());
       }
-      DType varType = expr_btype();  
-      llvm::Type* llvmVarType = getLLVMType(varType, TheContext);  
+      printf("after namedvalues \n");
+      Dtype varType = expr_btype();
+      printf("dtype is %d \n",varType);
+      llvm::Type* llvmVarType = getLLVMType(varType, TheContext,0);  
       // maybe ad for reference
-      return Builder.CreateLoad(getLLVMType(type, TheContext), LValAddr);
+      printf("before return \n");
+      return Builder.CreateLoad(llvmVarType, LValAddr);
 
     }
 
@@ -590,9 +611,10 @@ class Block : public Stmt {
     }
   }
   virtual llvm::Value* compile() override {
-
+    printf("Inside the compile of the block\n");
     for(Stmt *s: stmt_list) { //maybe reverse list (not needed)
       // if(s == nullptr) continue;
+      printf("Starting compiling the statement\n");
       s->compile();
 
       // if (dynamic_cast<Return *> (s)) //maybe not needed
@@ -695,8 +717,8 @@ class String_const : public AST{
     llvm::Value *strValue = Builder.CreateGlobalStringPtr(llvm::StringRef(str), "strconst");
     if (!strValue)
     {
-        std::string msg = "Error while compiling String_Cosnt: " + str + ".";
-        return LogErrorV(msg.c_str());
+        //std::string msg = "Error while compiling String_Cosnt: " + c_str(str) + ".";
+        //return LogErrorV(msg.c_str());
     }
     return strValue;
 
@@ -749,6 +771,7 @@ class L_value : public Expr {
             d->append(0);
           }
           set_typedims(new Type(val->var->type->basic_type(),d));
+          id->set_typedims(new Type(val->var->type->basic_type(),d));
         }
         //set_type(val->var->type->basic_type());
         std::cout<< "succesful varibale " << c << *(this->expr_type()) <<"lookup \n";
@@ -770,6 +793,7 @@ class L_value : public Expr {
     // Case 1: The L_value is an identifier
     if (id != nullptr) {
         if (!expr_list.empty()) {
+
             std::vector<llvm::Value*> offsets;
             llvm::Type* elementType;
 
@@ -781,7 +805,9 @@ class L_value : public Expr {
                 offsets.push_back(compiledExpr);
             }
 
-            result = id->compile_arr(&offsets, &elementType);
+            result = id->compile();
+
+            //result = id->compile_arr(&offsets, &elementType);
             if (!result) {
                 return LogErrorV("Error compiling array element address.");
             }
@@ -789,7 +815,9 @@ class L_value : public Expr {
             result = Builder.CreateGEP(elementType, result, offsets);
 
         } else {
-            result = id->compile_ptr();
+            printf("Inside correct branch compiling id\n");
+            result = id->compile();
+
         }
     }
     // Case 2: The L_value is a string constant
@@ -800,13 +828,13 @@ class L_value : public Expr {
             return LogErrorV("Error compiling string constant.");
         }
     }
-    if (!expr_list.empty() && result) {
-        llvm::Type* elementType = getLLVMType(expr_type(), TheContext); // Determine the element type
-        result = Builder.CreateLoad(elementType, result);  // Load the value at the computed address
-    }
+    // if (!expr_list.empty() && result) {
+    //     llvm::Type* elementType = getLLVMType(expr_type(), TheContext); 
+    //     result = Builder.CreateLoad(elementType, result);  
+    // }
 
     return result;
-}
+  }
 
   private:
     Id* id;
@@ -1114,6 +1142,25 @@ class Id_list : public Local_def{
         i=true;
       }
     }
+    virtual llvm::Value* compile() override{
+      llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+      Type * vartype = Idlist[0]->expr_type();
+      int dims=0;
+      if(vartype->dimensions()>0) dims=vartype->array_dim(0);
+      llvm::Type *llvm_type = getLLVMType(vartype->basic_type(), TheContext,dims);
+
+      for(auto id =Idlist.begin(); id!=Idlist.end(); ++id)
+      {
+        // maybe add something for the scope
+          llvm::StringRef varName = (*id)->name();
+          std::string name = (*id)->name();
+          llvm::AllocaInst *allocaInst = CreateEntryBlockAlloca(TheFunction, varName, llvm_type);
+          NamedValues[name] = allocaInst;
+      }
+      return nullptr;
+    }
+
+
   private:
   std::vector<Id*> Idlist;
 };
@@ -1133,6 +1180,18 @@ class Def_list : public Local_def{
       for(const auto &s : deflist){
         s->sem();
       }
+    }
+    std::vector<L_def*> getList(){
+      return deflist;
+    }
+
+    virtual llvm::Value* compile() override {
+      for (auto def: deflist)
+      {
+        def->compile();
+        //Builder.SetInsertPoint(BB);
+      }
+      return nullptr;
     }
   private:
     std::vector<L_def*> deflist; 
@@ -1218,6 +1277,12 @@ class Var_def : public L_def {
       id_list->id_type(type);
       id_list->sem();
     }
+    virtual llvm::Value* compile() override{
+      std::cout << "the type is " << type->basic_type() << " and size " << type->dimensions();
+      id_list->compile();
+      return nullptr;
+    }
+
   private:
     Id_list * id_list;
     Type* type;
@@ -1273,6 +1338,15 @@ class Function : public L_def {
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", function);
     Builder.SetInsertPoint(BB);
 
+
+    std::vector<L_def*> deflist = def_list->getList();
+    for (auto def: deflist)
+      {
+        def->compile();
+        Builder.SetInsertPoint(BB);
+      }
+
+    printf("Starting compiling the block\n");
     block -> compile();
 
     Builder.SetInsertPoint(BB_ofAbovelvelFunc);
@@ -1303,15 +1377,16 @@ class Valuation : public Stmt {
       printf("valuation sem\n");
     }
     virtual llvm::Value * compile() override {
-      // llvm::Value *LValAddr = var->compile_ptr();
-      // if (!LValAddr)
-      //     return LogErrorV("Valuation: LValue(var) could not be compiled.");
+      printf("The evaluation is starting");
+      llvm::Value *LValAddr = var->compile();
+      if (!LValAddr)
+          return LogErrorV("Valuation: LValue(var) could not be compiled.");
 
-      // llvm::Value * ExprValue = expr->compile();
-      // if (!ExprValue)
-      //     return LogErrorV("Valuation: Expression(expr) could not be compiled.");
+      llvm::Value * ExprValue = expr->compile();
+      if (!ExprValue)
+          return LogErrorV("Valuation: Expression(expr) could not be compiled.");
 
-      // Builder.CreateStore(ExprValue, LValAddr);
+      Builder.CreateStore(ExprValue, LValAddr);
       return nullptr;
     }
   private: 
