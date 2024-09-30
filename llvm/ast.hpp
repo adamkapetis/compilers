@@ -450,7 +450,6 @@ class Id : public Expr {
     }
 
     virtual llvm::Value* compile() override {
-      printf("i am in the id \n");
       // psaxno gia tin metabliti
       std::string name = std::string(id);
       llvm::Value* LValAddr = NamedValues[name]; //maybe search in stack frame
@@ -458,14 +457,20 @@ class Id : public Expr {
         std::string msg = "Unknown variable name: " + std::string(id) + ".";
         return LogErrorV(msg.c_str());
       }
-      printf("after namedvalues \n");
       Dtype varType = expr_btype();
-      printf("dtype is %d \n",varType);
       llvm::Type* llvmVarType = getLLVMType(varType, TheContext,0);  
       // maybe ad for reference
-      printf("before return \n");
       return Builder.CreateLoad(llvmVarType, LValAddr);
 
+    }
+    llvm::Value* compile_ptr()  {
+      std::string name = std::string(id);
+      llvm::Value* LValAddr = NamedValues[name]; //maybe search in stack frame
+      if (!LValAddr) {
+        std::string msg = "Unknown variable name: " + std::string(id) + ".";
+        return LogErrorV(msg.c_str());
+      }
+      return LValAddr;
     }
 
   private:
@@ -640,10 +645,10 @@ class Block : public Stmt {
     }
   }
   virtual llvm::Value* compile() override {
-    printf("Inside the compile of the block\n");
+
     for(Stmt *s: stmt_list) { //maybe reverse list (not needed)
       // if(s == nullptr) continue;
-      printf("Starting compiling the statement\n");
+
       s->compile();
 
       // if (dynamic_cast<Return *> (s)) //maybe not needed
@@ -846,6 +851,54 @@ class L_value : public Expr {
         } else {
             printf("Inside correct branch compiling id\n");
             result = id->compile();
+
+        }
+    }
+    // Case 2: The L_value is a string constant
+    else if (str != nullptr) {
+
+        result = str->compile();
+        if (!result) {
+            return LogErrorV("Error compiling string constant.");
+        }
+    }
+    // if (!expr_list.empty() && result) {
+    //     llvm::Type* elementType = getLLVMType(expr_type(), TheContext); 
+    //     result = Builder.CreateLoad(elementType, result);  
+    // }
+
+    return result;
+  }
+  llvm::Value* compile_ptr()  {
+
+    llvm::Value* result = nullptr;
+
+    // Case 1: The L_value is an identifier
+    if (id != nullptr) {
+        if (!expr_list.empty()) {
+
+            std::vector<llvm::Value*> offsets;
+            llvm::Type* elementType;
+
+            for (Expr* expr : expr_list) {
+                llvm::Value* compiledExpr = expr->compile();
+                if (!compiledExpr) {
+                    return LogErrorV("Error compiling index expression.");
+                }
+                offsets.push_back(compiledExpr);
+            }
+
+            result = id->compile_ptr();
+
+            //result = id->compile_arr(&offsets, &elementType);
+            if (!result) {
+                return LogErrorV("Error compiling array element address.");
+            }
+
+            result = Builder.CreateGEP(elementType, result, offsets);
+
+        } else {
+            result = id->compile_ptr();
 
         }
     }
@@ -1160,6 +1213,9 @@ class Id_list : public Local_def{
         s->set_typedims(t);
       }
     }
+    std::vector<Id*> getList() {
+      return Idlist;
+    }
     void sem() override {
       for(auto s =Idlist.rbegin(); s!=Idlist.rend(); ++s) (*s)->sem();
     }
@@ -1239,13 +1295,19 @@ class Fpar_def : public Local_def {
       idlist->id_type(type);
       //printf("idlist->sem\n");
       idlist->sem();      
+    } 
+    virtual llvm::Value* compile() override {
+      return LogErrorV("Fpar_def error");
     }
-    virtual llvm::Value* compile(std::vector<llvm::Type* > *params){
+    llvm::Value* compile(std::vector<std::string> * param_names, std::vector<llvm::Type*> *param_types){
       llvm::Type * t= getLLVMType(type->basic_type(),TheContext,type->dimensions()/*prepei na to ftiaksoume afto*/);
-      // for(auto *s :idlist->Idlist){
-      //   params->push_back(t);
-      //   //isos prepei na ftiaksoume kai gia id->name();
-      // }
+      for(auto *s : idlist->getList()){
+        param_types -> push_back(t);
+        std::string name = std::string(s->name());
+        param_names -> push_back(name);
+        //isos prepei na ftiaksoume kai gia id->name();
+      }
+      return nullptr;
     }
   private:
     Id_list* idlist;
@@ -1268,10 +1330,18 @@ class Fpar_list : public Local_def {
       //printf("entered par_list\n");
       for(auto s =par_list.begin(); s!=par_list.end(); ++s) (*s)->sem();
     }
-    virtual llvm::Value* compile(std::vector<llvm::Type*> *params){
-      for(auto *s:par_list){
-        s->compile(params);
+    virtual llvm::Value* compile() override{
+      for(auto *s : par_list){
+        s->compile();
       }
+      return nullptr;
+    }
+
+    llvm::Value* compile(std::vector<std::string> * param_names, std::vector<llvm::Type*> *param_types) {
+      for(auto *s : par_list){
+        s->compile(param_names, param_types);
+      }
+      return nullptr;
     }
   private:
     std::vector<Fpar_def*> par_list;
@@ -1297,21 +1367,42 @@ class Header : public L_def {
       //printf("using fsem\n");
       id->fsem(); // prepei na apothikeboyme kai oti einai sygekrimena synarthsh kai posa orismata.
     }
-    virtual llvm::Function * compile() {
+    virtual llvm::Function * compile() override{
+
+      // and den einai i top sinartisi tote 
       // kapoio elegxo kai link sto stack ths prohgoumenhs synarthshs
-      std::vector<llvm::Type *> fparam_types;
-      par_list->compile(&fparam_types);//pithanotata me arguements// tha prepei na gyrnaei type gia kathe parameter
-      //llvm::Function * function = TheModule.getFunction(id->name());//psaxnoyme na 
-      //if()
-      llvm::Type *return_type = getLLVMType(type->basic_type(),TheContext,0);
-      // llvm::FunctionType * funcType = llvm::FunctionType::get(return_type,/*parameter types*/,false);
-      // llvm::Function * function = llvm::Function::Create(funcType,llvm::Function::ExternalLinkage,id->name(),TheModule.get());
+
+      if (par_list)
+        par_list->compile(&fparam_names, &fparam_types);//pithanotata me arguements// tha prepei na gyrnaei type gia kathe parameter
+      
+      std::string name = std::string(id->name());
+      llvm::Function * function = TheModule->getFunction(name);
+      if (!function)
+        {
+            llvm::Type *return_type = getLLVMType(type->basic_type(),TheContext,0);
+            llvm::FunctionType *funcType = llvm::FunctionType::get(return_type, fparam_types, false);
+            function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, name, TheModule.get());
+        }
+        return function;
+    }
+    std::vector<llvm::Type *> getfparam_types()
+    {
+        return fparam_types;
     }
 
+    std::vector<std::string> getfparam_names()
+    {
+        return fparam_names;
+    }
+    Type* getType(){
+      return type;
+    }
   private:
     Id* id;
     Type * type;
     Fpar_list* par_list;
+    std::vector<llvm::Type*> fparam_types;
+    std::vector<std::string> fparam_names;
 };
 
 class Func_def : public Local_def {
@@ -1381,17 +1472,39 @@ class Function : public L_def {
     // Get the insertion point of the previous function.
     llvm::BasicBlock *BB_ofAbovelvelFunc = Builder.GetInsertBlock();
 
-    // First compile the header
-    // llvm::Function *function = header -> compile();
-    llvm::Type *intType = llvm::Type::getInt64Ty(TheContext);
-    llvm::FunctionType *funcType = llvm::FunctionType::get(intType, false); // No arguments
-    llvm::Function *function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "simpleFunction", TheModule.get());
+    // ***Compile the header
+    llvm::Function *function = header->compile();
+    if (!function)
+        return nullptr;
 
+
+    // For testing only instead of header
+    // **************
+    // llvm::Type *intType = llvm::Type::getInt64Ty(TheContext);
+    // llvm::FunctionType *funcType = llvm::FunctionType::get(intType, false); // No arguments
+    // llvm::Function *function = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "simpleFunction", TheModule.get());
+    // ***************
 
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", function);
     Builder.SetInsertPoint(BB);
 
+    //***Get names/types of the parameters and save the args in the NamedValues table
+    unsigned int current_arg = 0;
+    std::vector<std::string> fparam_names = header->getfparam_names();
+    std::vector<llvm::Type *> fparam_types = header->getfparam_types();
 
+    // Create allocation for each arguments
+    for (auto &Arg : function->args())
+    {
+        llvm::AllocaInst *Alloca = CreateEntryBlockAlloca(function, llvm::StringRef(fparam_names[current_arg]), fparam_types[current_arg]);
+        Builder.CreateStore(&Arg, Alloca);
+        NamedValues[fparam_names[current_arg++]] = Alloca;
+    }
+
+    //***prepei na ftiaxtei kapoio stackframe gia tin sinartisi kai tis parametrous */
+
+
+    // ***Compile the Def List
     std::vector<L_def*> deflist = def_list->getList();
     for (auto def: deflist)
       {
@@ -1399,8 +1512,19 @@ class Function : public L_def {
         Builder.SetInsertPoint(BB);
       }
 
-    printf("Starting compiling the block\n");
+    // ***Compile The Block
     block -> compile();
+
+    if (!Builder.GetInsertBlock()->getTerminator())
+    {   
+        Type* t = header->getType();
+        if (t->basic_type() == Type_int)
+          Builder.CreateRet(c64(0));
+        else if (t->basic_type() == Type_char)
+          Builder.CreateRet(c64(0));
+        else
+            Builder.CreateRetVoid();
+    }
 
     Builder.SetInsertPoint(BB_ofAbovelvelFunc);
 
@@ -1431,11 +1555,11 @@ class Valuation : public Stmt {
     }
     virtual llvm::Value * compile() override {
       printf("The evaluation is starting");
-      llvm::Value *LValAddr = var->compile();
+      llvm::Value *LValAddr = var->compile_ptr();
       if (!LValAddr)
           return LogErrorV("Valuation: LValue(var) could not be compiled.");
 
-      llvm::Value * ExprValue = expr->compile();
+      llvm::Value *ExprValue = expr->compile();
       if (!ExprValue)
           return LogErrorV("Valuation: Expression(expr) could not be compiled.");
 
