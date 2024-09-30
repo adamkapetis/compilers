@@ -1,0 +1,5 @@
+fun main():nothing
+var test:int[10][2];
+{
+    
+}

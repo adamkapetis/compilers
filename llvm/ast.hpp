@@ -368,14 +368,14 @@ class Type : public AST{
     }
     virtual llvm::Type* get_llvm_type(llvm::LLVMContext& context,int dim){
       if(dim>1){
-        return llvm::ArrayType::get(get_llvm_type(context,dim-1), array_dim(dim));
+        return llvm::ArrayType::get(get_llvm_type(context,dim-1), array_dim(dim-1));
       }
       if(dim==1){
         switch (dtyp) {
           case Type_int:
-                return llvm::ArrayType::get(llvm::Type::getInt64Ty(context),array_dim(dim));
+                return llvm::ArrayType::get(llvm::Type::getInt64Ty(context),array_dim(dim-1));
           case Type_char:
-                return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), array_dim(dim)); 
+                return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), array_dim(dim-1)); 
           default:
               return nullptr;  //maybe put reference or arrays
         }
@@ -1174,9 +1174,10 @@ class Id_list : public Local_def{
     virtual llvm::Value* compile() override{
       llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
       Type * vartype = Idlist[0]->expr_type();
-      int dims=0;
-      if(vartype->dimensions()>0) dims=vartype->array_dim(0);
-      llvm::Type *llvm_type = getLLVMType(vartype->basic_type(), TheContext,dims);
+      llvm::Type* llvm_type=vartype->get_llvm_type(TheContext,vartype->dimensions());
+      //int dims=0;
+      //if(vartype->dimensions()>0) dims=vartype->array_dim(0);
+      //llvm::Type *llvm_type = getLLVMType(vartype->basic_type(), TheContext,dims);
 
       for(auto id =Idlist.begin(); id!=Idlist.end(); ++id)
       {
@@ -1239,12 +1240,12 @@ class Fpar_def : public Local_def {
       //printf("idlist->sem\n");
       idlist->sem();      
     }
-    virtual llvm::Value* compile(std::vector<llvm::Type* > params){
+    virtual llvm::Value* compile(std::vector<llvm::Type* > *params){
       llvm::Type * t= getLLVMType(type->basic_type(),TheContext,type->dimensions()/*prepei na to ftiaksoume afto*/);
-      for(auto *s :idlist->id_list){
-        params.push_back(t);
-        //isos prepei na ftiaksoume kai gia id->name();
-      }
+      // for(auto *s :idlist->Idlist){
+      //   params->push_back(t);
+      //   //isos prepei na ftiaksoume kai gia id->name();
+      // }
     }
   private:
     Id_list* idlist;
@@ -1299,12 +1300,12 @@ class Header : public L_def {
     virtual llvm::Function * compile() {
       // kapoio elegxo kai link sto stack ths prohgoumenhs synarthshs
       std::vector<llvm::Type *> fparam_types;
-      par_list->compile(fparam_types);//pithanotata me arguements// tha prepei na gyrnaei type gia kathe parameter
+      par_list->compile(&fparam_types);//pithanotata me arguements// tha prepei na gyrnaei type gia kathe parameter
       //llvm::Function * function = TheModule.getFunction(id->name());//psaxnoyme na 
       //if()
       llvm::Type *return_type = getLLVMType(type->basic_type(),TheContext,0);
-      llvm::FunctionType * funcType = llvm::FunctionType::get(return_type,/*parameter types*/,false);
-      llvm::Function * function = llvm::Function::Create(funcType,llvm::Function::ExternalLinkage,id->name(),TheModule.get());
+      // llvm::FunctionType * funcType = llvm::FunctionType::get(return_type,/*parameter types*/,false);
+      // llvm::Function * function = llvm::Function::Create(funcType,llvm::Function::ExternalLinkage,id->name(),TheModule.get());
     }
 
   private:
