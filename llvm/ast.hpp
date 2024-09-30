@@ -366,6 +366,35 @@ class Type : public AST{
     int dimensions (){
       return dims->length();
     }
+    virtual llvm::Type* get_llvm_type(llvm::LLVMContext& context,int dim){
+      if(dim>1){
+        return llvm::ArrayType::get(get_llvm_type(context,dim-1), array_dim(dim));
+      }
+      if(dim==1){
+        switch (dtyp) {
+          case Type_int:
+                return llvm::ArrayType::get(llvm::Type::getInt64Ty(context),array_dim(dim));
+          case Type_char:
+                return llvm::ArrayType::get(llvm::Type::getInt8Ty(context), array_dim(dim)); 
+          default:
+              return nullptr;  //maybe put reference or arrays
+        }
+      }
+      else{
+        switch (dtyp) {
+          case Type_int:
+                return llvm::Type::getInt64Ty(context);  
+          case Type_char:
+                return llvm::Type::getInt8Ty(context);   
+          case Type_bool:
+              return llvm::Type::getInt1Ty(context);  
+          case Type_void:
+              return llvm::Type::getVoidTy(context);   
+          default:
+              return nullptr;  //maybe put reference or arrays
+        }
+      }
+    }
   private:
     Dtype dtyp;
     Dims* dims;
@@ -1210,6 +1239,13 @@ class Fpar_def : public Local_def {
       //printf("idlist->sem\n");
       idlist->sem();      
     }
+    virtual llvm::Value* compile(std::vector<llvm::Type* > params){
+      llvm::Type * t= getLLVMType(type->basic_type(),TheContext,type->dimensions()/*prepei na to ftiaksoume afto*/);
+      for(auto *s :idlist->id_list){
+        params.push_back(t);
+        //isos prepei na ftiaksoume kai gia id->name();
+      }
+    }
   private:
     Id_list* idlist;
     Type* type;
@@ -1230,6 +1266,11 @@ class Fpar_list : public Local_def {
     void sem() override{
       //printf("entered par_list\n");
       for(auto s =par_list.begin(); s!=par_list.end(); ++s) (*s)->sem();
+    }
+    virtual llvm::Value* compile(std::vector<llvm::Type*> *params){
+      for(auto *s:par_list){
+        s->compile(params);
+      }
     }
   private:
     std::vector<Fpar_def*> par_list;
@@ -1255,6 +1296,17 @@ class Header : public L_def {
       //printf("using fsem\n");
       id->fsem(); // prepei na apothikeboyme kai oti einai sygekrimena synarthsh kai posa orismata.
     }
+    virtual llvm::Function * compile() {
+      // kapoio elegxo kai link sto stack ths prohgoumenhs synarthshs
+      std::vector<llvm::Type *> fparam_types;
+      par_list->compile(fparam_types);//pithanotata me arguements// tha prepei na gyrnaei type gia kathe parameter
+      //llvm::Function * function = TheModule.getFunction(id->name());//psaxnoyme na 
+      //if()
+      llvm::Type *return_type = getLLVMType(type->basic_type(),TheContext,0);
+      llvm::FunctionType * funcType = llvm::FunctionType::get(return_type,/*parameter types*/,false);
+      llvm::Function * function = llvm::Function::Create(funcType,llvm::Function::ExternalLinkage,id->name(),TheModule.get());
+    }
+
   private:
     Id* id;
     Type * type;
