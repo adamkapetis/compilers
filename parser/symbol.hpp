@@ -87,7 +87,7 @@ class Scope {
   }
   void insert_args(const char *c,Type *t){
     if (locals.find(c) == locals.end()){
-    printf("cant find funtion\n");
+    printf("cant find function\n");
     yyerror("");
     }
     //if(locals[tmp].fun==nullptr)printf("cant find function\n");
@@ -135,6 +135,9 @@ class SymbolTable {
   }
   bool check_empty(){
     return scopes.empty();
+  }
+  int st_size(){
+    return scopes.size();
   }
   int scope_size(){
     return scopes.back().size();

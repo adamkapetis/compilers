@@ -1299,13 +1299,13 @@ yyreduce:
 
   case 10: /* fpar_def: "ref" T_id td ':' fpar_type  */
 #line 135 "parser.y"
-                                            { (yyvsp[-2].id_list)->append(new Id((yyvsp[-3].id)));(yyval.fpar_def)=new Fpar_def((yyvsp[-2].id_list),(yyvsp[0].type),true); }
+                                            { (yyvsp[-2].id_list)->append_front(new Id((yyvsp[-3].id)));(yyval.fpar_def)=new Fpar_def((yyvsp[-2].id_list),(yyvsp[0].type),true); }
 #line 1304 "parser.cpp"
     break;
 
   case 11: /* fpar_def: T_id td ':' fpar_type  */
 #line 136 "parser.y"
-                                            { (yyvsp[-2].id_list)->append(new Id((yyvsp[-3].id)));(yyval.fpar_def)=new Fpar_def((yyvsp[-2].id_list),(yyvsp[0].type)); }
+                                            { (yyvsp[-2].id_list)->append_front(new Id((yyvsp[-3].id)));(yyval.fpar_def)=new Fpar_def((yyvsp[-2].id_list),(yyvsp[0].type)); }
 #line 1310 "parser.cpp"
     break;
 
@@ -1389,7 +1389,7 @@ yyreduce:
 
   case 25: /* var_def: "var" T_id td ':' type ';'  */
 #line 166 "parser.y"
-                                            { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/(yyvsp[-3].id_list)->append(new Id((yyvsp[-4].id)));(yyval.var_def)=new Var_def((yyvsp[-3].id_list),(yyvsp[-1].type));/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
+                                            { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/(yyvsp[-3].id_list)->append_front(new Id((yyvsp[-4].id)));(yyval.var_def)=new Var_def((yyvsp[-3].id_list),(yyvsp[-1].type));/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
 #line 1394 "parser.cpp"
     break;
 
