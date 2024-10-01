@@ -4,7 +4,7 @@ LLVMCONFIG=llvm-config
 
 CXX=clang++
 
-CXXFLAGS=-g `$(LLVMCONFIG) --cxxflags` 
+CXXFLAGS=-g `$(LLVMCONFIG) --cxxflags` -fexceptions
 LDFLAGS=`$(LLVMCONFIG) --ldflags --system-libs --libs all`
 
 default: gracec

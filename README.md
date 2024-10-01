@@ -35,3 +35,21 @@ When creating the Makefile don't nail your parameters. Use `llvm-config` so that
 
 To test that everything runs use `make` and then:
 ``` ./gracec < ../grace_programs/hanoi.grc```
+
+### Assembly and IMM files
+To create the assembly and IMM files you have to run this command:
+
+``` 
+    ./gracec ../grace_programs/test.grc
+```
+and two files in the same directory will be created with the following names: 
+test.imm and test.asm
+Then to create an executable you have to compile the assembly with the following:
+``` 
+    clang test.asm ../llvm/libgrc.a -no-pie -o test.out
+```
+A .out file will be created and you can run it with:
+```
+    ./test.out
+```
+

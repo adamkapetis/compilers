@@ -221,35 +221,6 @@ class AST {
       return llvm::ConstantInt::get(TheContext, llvm::APInt(64, n, true));
     }
 
-    // static llvm::Type* parse_type(Type t, std::vector<int> dim_sizes=std::vector<int>(), bool ref=false) {
-    //   llvm::ArrayType * at;
-
-    //   if (!dim_sizes.empty()) {
-    //     for(auto it = dim_sizes.rbegin(); it != dim_sizes.rend(); ++it) {
-    //       if (*it == 0) *it = 64;
-
-    //       if(it == dim_sizes.rbegin()) {
-    //         if (t == 2)
-    //           at = llvm::ArrayType::get(i32, *it);
-    //         else
-    //           at = llvm::ArrayType::get(i8, *it);
-    //       }
-    //       else
-    //         at = llvm::ArrayType::get(at, *it);
-    //     }
-    //   }
-
-
-    //   switch(t) {
-    //     case 0: return ref ? llvm::PointerType::get(i32, 0) : i32;
-    //     case 1: return ref ? llvm::PointerType::get(i8, 0) : i8;
-    //     case 2: if(ref) return llvm::PointerType::get(i32, 0); else return at;  /////!array
-    //     case 3: if(ref) return llvm::PointerType::get(i8, 0); else return at;  /////!array
-    //     case 5: return llvm::Type::getVoidTy(TheContext);
-    //     default: return nullptr;
-    //   }
-    // }
-
     static llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, const llvm::StringRef &VarName, llvm::Type *VarType) {
       llvm::IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
       return TmpB.CreateAlloca(VarType, nullptr, VarName);

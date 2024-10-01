@@ -3,14 +3,18 @@
 #include <cstdio>
 #include <string>
 #include <cstdlib>
+#include <fstream>
+#include <unistd.h>
+#include <fcntl.h>
 #include "lexer.hpp"
 //#include "symbol.hpp"
 #include "ast.hpp"
+#include "cxxopts.hpp"
 
 
 #define YYDEBUG 1
 SymbolTable st;
-
+bool optimize;
 %}
 
 //%define lr.default-reduction consistent
@@ -226,11 +230,106 @@ void yyerror(const char *msg) {
     exit(42);
 }
 
-int main() {
-    /* #ifdef YYDEBUG
-    yydebug = 1;
-    #endif */
-    int res = yyparse();
-    if(res == 0) printf("Successful parsing\n");
-    return res;
+// int main() {
+//     /* #ifdef YYDEBUG
+//     yydebug = 1;
+//     #endif */
+//     int res = yyparse();
+//     if(res == 0) printf("Successful parsing\n");
+//     return res;
+// }
+
+int main(int argc, char** argv) {
+    //fill_names();
+
+    cxxopts::Options options("Gracec", "Compiler for the Grace Language");
+
+    options.add_options()
+        ("o,optimize", "Optimize code")
+        ("f,final", "Print final code")
+        ("i,intermediate", "Print intermediade representation")
+        ("h,help", "Show this help message")
+        ("filename", "File containing grace code", cxxopts::value<std::string>())
+    ;
+
+    options.parse_positional({"filename"});
+    cxxopts::ParseResult result;
+     try {
+      result = options.parse(argc, argv);
+    } catch (const std::exception& ex) {
+      std::cerr << ex.what() << ". Emit '-h' flag for usage." << std::endl;
+      exit(1);
+    }
+
+    if (!result.arguments().size()) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    optimize = result["optimize"].as<bool>();
+
+    if(result["final"].as<bool>()) {
+        /* yyparse();
+        AST::compile_to_asm(); */
+        exit(0);
+    }
+
+    if(result["intermediate"].as<bool>()) {
+        yyparse();
+        AST::TheModule->print(llvm::outs(), nullptr);
+        exit(0);
+    }
+
+    std::string filename;
+    if(result.count("filename")) {
+        filename = result["filename"].as<std::string>();
+
+        auto found = filename.find_last_of('.');
+        auto title = filename.substr(0, found);
+
+        std::ifstream file(filename, std::ios::in);
+        if(!file.is_open()) {
+            std::cerr << "Gracec: could not open file " << filename << std::endl;
+            exit(1);
+        }
+
+        int fd = open(filename.c_str(), O_RDONLY);
+        if(fd == -1) {
+            std::cerr << "Gracec: could not open file " << filename << std::endl;
+            exit(1);
+        }
+
+        if(dup2(fd, 0) == -1) {
+            std::cerr << "Gracec: failed" << std::endl;
+            exit(1);
+        }
+        close(fd);
+
+        yyparse();
+        file.close();
+
+        std::error_code error;
+        llvm::raw_fd_ostream _imm(title + ".imm", error);
+        if(!error) {
+            AST::TheModule->print(_imm, nullptr);
+            _imm.flush();
+        } else {
+            std::cerr << "Gracec: error creating file" << std::endl;
+            exit(1);
+        }
+
+        char command[256];
+        sprintf(command, "llc-16 -o %s.asm %s.imm", title.c_str(), title.c_str());
+        if(system(command)) {
+            std::cerr << "Gracec: error compiling imm code" << std::endl;
+            exit(1);
+        }
+    }
+
+    return 0;
 }
