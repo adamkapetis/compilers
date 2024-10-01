@@ -41,11 +41,10 @@ class AST {
 
     llvm::Function *init_compile(llvm::Value* main_function)
     {   
-        // Create and add entry point for main function
+
         llvm::FunctionType *funcType = llvm::FunctionType::get(i64, {}, false); // false indicates the function does not take variadic arguments.
         llvm::Function *main = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, "main", TheModule.get());
 
-        // Create the basic block for the main function
         llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
         Builder.SetInsertPoint(BB);
 

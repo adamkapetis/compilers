@@ -1,4 +1,7 @@
-fun hello () : nothing
+fun main () : nothing
+    fun hello (g, a : int; r : char) : int {
+        return 5;
+    }
 var changed : int;
 var adam : char;
 var a : int[5];
