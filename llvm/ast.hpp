@@ -684,28 +684,34 @@ class Func_call : public Expr , public Stmt{
           std::cout << c;//tha eprepe na einai yyerror, prosthiki format sthn yyerror
           yyerror("invalid function\n");
         }
-        printf("found the function %s on st\n",c);
-        Type* typeit=*func->fun->arg.rbegin();
-        std::cout << *typeit <<std::endl;
-        auto exprs = t.rbegin();
-        auto expre = t.rend();
-        printf("starting to compare types of function %s arguements\n",c);
-        if(func->fun->arg.rbegin()==func->fun->arg.rend()) printf("empty type vector on funciton\n");
-        for(auto s = (func->fun->arg.rbegin()); s!=func->fun->arg.rend(); ++s){
-          if(*exprs == *expre) {
-            yyerror(" wrong arguements ");
-          }
-          if((**s)==(**exprs)) std::cout<< "correct arguement " << **s << " = " << **exprs << std::endl;
-          else {
-            std::cout<< "wrong arguement " << **s << " != " << **exprs << std::endl;
-            yyerror("wrong arguements");
-          }
-          exprs++;
+        if(func->fun->arg.begin()==func->fun->arg.end()){
+          printf("function %s does not have arguements \n",c);
+        }
+        else {
+          printf("found the function %s on st\n",c);
+          Type* typeit=*func->fun->arg.rbegin();
+          std::cout << *typeit <<std::endl;
+          auto exprs = t.rbegin();
+          auto expre = t.rend();
+          printf("starting to compare types of function %s arguements\n",c);
+          if(func->fun->arg.rbegin()==func->fun->arg.rend()) printf("empty type vector on funciton\n");
+          for(auto s = (func->fun->arg.rbegin()); s!=func->fun->arg.rend(); ++s){
+            if(*exprs == *expre) {
+              yyerror(" wrong arguements ");
+            }
+            if((**s)==(**exprs)) std::cout<< "correct arguement " << **s << " = " << **exprs << std::endl;
+            else {
+              std::cout<< "wrong arguement " << **s << " != " << **exprs << std::endl;
+              yyerror("wrong arguements");
+            }
+            exprs++;
 
         // }
         }
+      }
       //lookup sto st gia to Tid->name();
       }
+      this->set_type(func->fun->type);
       printf(" valid function call\n");
     }
 
@@ -1254,6 +1260,9 @@ class Id_list : public Local_def{
     void append(Id* id){
       Idlist.push_back(id);
     }
+    void append_front(Id* id){
+      Idlist.push_back(id);
+    }
     void id_type(Type* t){
       for( const auto &s : Idlist){
         s->set_typedims(t);
@@ -1496,6 +1505,24 @@ class Function : public L_def {
       }
       //printf("pushing scope");
       st.push_scope();
+      if(st.st_size()==1){ // an eisai sto proto scope bale oles tis boithitikes synarthseis oste na einai prosbasimes apo oles
+        printf("you are at the first scope of the ST \n\n");
+        st.insertf("writeString",Type_void);
+        //st.stopfunc();
+        Dims *d =new Dims();
+        d->append(0);
+        st.insert_args("writeString",new Type(Type_char,d));
+        st.insertf("writeInteger",Type_void);
+        st.stopfunc();
+        st.insert_args("writeInteger",new Type(Type_int,new Dims()));
+        st.insertf("writeChar",Type_void);
+        st.stopfunc();
+        st.insert_args("writeChar",new Type(Type_char,new Dims()));
+        st.insertf("readInteger",Type_int);
+        st.stopfunc();
+        st.insertf("readChar",Type_char);
+        st.stopfunc();
+      }
       header->namesem(); 
       //printf("header->sem\n");
       header->sem();

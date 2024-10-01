@@ -5,7 +5,12 @@ fun main():nothing
         {
             y<-y+1;
         }
-    {
+    {   
+        writeString("aaaaa");
         y<-2;
         x<-plus(y);
+        writeInteger(4);
+        writeChar('a');
+        y<-readInteger();
+        
     }

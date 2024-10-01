@@ -140,6 +140,9 @@ class SymbolTable {
   int scope_size(){
     return scopes.back().size();
   }
+  int st_size(){
+    return scopes.size();
+  }
   void f_args(){
     const char *c = (const char *)scopes.back().getfunc();
     auto fit=scopes.rbegin();

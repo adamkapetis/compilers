@@ -107,7 +107,7 @@ SymbolTable st;
 program: 
     func_def	                            { std::cout << "AST : " << *$1 << std::endl ;$1->sem(); }
 ;
-ld:                                         { $$=new Def_list(); }
+ld:                                          { $$=new Def_list(); }
 |   ld local_def                            { $1->append($2);$$=$1; }
 ;       
 func_def:                                   
