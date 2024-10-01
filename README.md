@@ -36,6 +36,9 @@ When creating the Makefile don't nail your parameters. Use `llvm-config` so that
 To test that everything runs use `make` and then:
 ``` ./gracec < ../grace_programs/hanoi.grc```
 
+### Run time Libray
+You have to go to llvm/lib and run `make` and then take the libgrc.a file and put it in the main llvm folder. 
+
 ### Assembly and IMM files
 To create the assembly and IMM files you have to run this command:
 

@@ -1,4 +1,5 @@
 fun hello () : nothing 
 {
-   writeString("Hello world!\n");
+   writeString("Hello world! \n ");
+   $writeInteger(1);
 }

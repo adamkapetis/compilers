@@ -15,6 +15,60 @@
 #define YYDEBUG 1
 SymbolTable st;
 bool optimize;
+std::vector<Function *> runtime_lib;
+void init_runtime_lib() {
+    // std::vector<L_def *> *v1 = new std::vector<L_def *>(); v1->push_back(new Var_Decl("n", INT_t, false, 0));
+    // Func_Decl *header1 = new Func_Decl("writeInteger", v1, NO_t);
+    // runtime_lib.push_back(new Function(header1));
+
+    // std::vector<L_def *> *v2 = new std::vector<L_def *>(); v2->push_back(new Var_Decl("c", CHAR_t, false, 0));
+    // Func_Decl *header2 = new Func_Decl("writeChar", v2, NO_t);
+    // runtime_lib.push_back(new Function(header2));
+
+    // std::vector<L_def *> *v3 = new std::vector<L_def *>(); v3->push_back(new Var_Decl("s", STRING_t, true, 1));
+    // Func_Decl *header3 = new Func_Decl("writeString", v3, NO_t);
+    // runtime_lib.push_back(new Function(header3));
+
+    // std::vector<L_def *> *v4 = new std::vector<L_def *>();
+    // Func_Decl *header4 = new Func_Decl("readInteger", v4, INT_t);
+    // runtime_lib.push_back(new Function(header4));
+
+    // std::vector<L_def *> *v5 = new std::vector<L_def *>();
+    // Func_Decl *header5 = new Func_Decl("readChar", v5, CHAR_t);
+    // runtime_lib.push_back(new Function(header5));
+
+    // std::vector<L_def *> *v6 = new std::vector<L_def *>(); v6->push_back(new Var_Decl("n", INT_t, false, 0)); v6->push_back(new Var_Decl("s", STRING_t, true, 1));
+    // Func_Decl *header6 = new Func_Decl("readString", v6, NO_t);
+    // runtime_lib.push_back(new Function(header6));
+
+    // std::vector<L_def *> *v7 = new std::vector<L_def *>(); v7->push_back(new Var_Decl("c", CHAR_t, false, 0));
+    // Func_Decl *header7 = new Func_Decl("ascii", v7, INT_t);
+    // runtime_lib.push_back(new Function(header7));
+
+    // std::vector<L_def *> *v8 = new std::vector<L_def *>(); v8->push_back(new Var_Decl("n", INT_t, false, 0));
+    // Func_Decl *header8 = new Func_Decl("chr", v8, CHAR_t);
+    // runtime_lib.push_back(new Function(header8));
+
+    // std::vector<L_def *> *v9 = new std::vector<L_def *>(); v9->push_back(new Var_Decl("s", STRING_t, true, 1));
+    // Func_Decl *header9 = new Func_Decl("strlen", v9, INT_t);
+    // runtime_lib.push_back(new Function(header9));
+
+    // std::vector<L_def *> *v10 = new std::vector<L_def *>(); v10->push_back(new Var_Decl("s1", STRING_t, true, 1)); v10->push_back(new Var_Decl("s2", STRING_t, true, 1));
+    // Func_Decl *header10 = new Func_Decl("strcmp", v10, INT_t);
+    // runtime_lib.push_back(new Function(header10));
+
+    // std::vector<L_def *> *v11 = new std::vector<L_def *>(); v11->push_back(new Var_Decl("trg", STRING_t, true, 1)); v11->push_back(new Var_Decl("src", STRING_t, true, 1));
+    // Func_Decl *header11 = new Func_Decl("strcpy", v11, NO_t);
+    // runtime_lib.push_back(new Function(header11));
+
+    // std::vector<L_def *> *v12 = new std::vector<L_def *>(); v12->push_back(new Var_Decl("trg", STRING_t, true, 1)); v12->push_back(new Var_Decl("src", STRING_t, true, 1));
+    // Func_Decl *header12 = new Func_Decl("strcat", v12, NO_t);
+    // runtime_lib.push_back(new Function(header12));
+}
+
+void delete_runtime_lib() {
+    for(auto &x: runtime_lib) delete x;
+}
 %}
 
 //%define lr.default-reduction consistent
@@ -110,9 +164,18 @@ bool optimize;
 
 program: 
     func_def	                            { std::cout << "AST : " << *$1 << std::endl ;
-                                            $1->sem(); 
-                                            $1->llvm_compile_and_dump();
-                                            //delete $1;
+                                            //st.push_scope();
+                                                //init_runtime_lib();
+                                                // for(auto &lib: runtime_lib) {
+                                                //     lib->sem();
+                                                // }
+                                                // st.push_scope();
+                                                    //$1->sem(); 
+                                                    $1->llvm_compile_and_dump(optimize);
+                                                    //delete $1;
+                                            //     st.pop_scope();
+                                            //     delete_runtime_lib();
+                                            // st.pop_scope();
                                             }
 ;
 ld:                                         { $$=new Def_list(); }
@@ -241,7 +304,7 @@ void yyerror(const char *msg) {
 
 int main(int argc, char** argv) {
     //fill_names();
-
+    optimize = false;
     cxxopts::Options options("Gracec", "Compiler for the Grace Language");
 
     options.add_options()
@@ -284,6 +347,7 @@ int main(int argc, char** argv) {
         AST::TheModule->print(llvm::outs(), nullptr);
         exit(0);
     }
+
 
     std::string filename;
     if(result.count("filename")) {

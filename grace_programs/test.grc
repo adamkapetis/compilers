@@ -1,6 +1,6 @@
 fun main () : nothing
     var a : int ;
     {
-        a <- - 5;
-        print
+        $a <- 5;
+        $writeString("Hello world! \n");
     }

@@ -28,7 +28,6 @@ declare void @strcat(ptr, ptr)
 define void @main() {
 entry:
   %a = alloca i64, align 8
-  store i64 -5, ptr %a, align 4
   ret void
 }
 

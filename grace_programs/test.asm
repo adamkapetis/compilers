@@ -6,7 +6,6 @@
 main:                                   # @main
 	.cfi_startproc
 # %bb.0:                                # %entry
-	movq	$-5, -8(%rsp)
 	retq
 .Lfunc_end0:
 	.size	main, .Lfunc_end0-main

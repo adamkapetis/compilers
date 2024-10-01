@@ -32,7 +32,7 @@
 //using namespace llvm;
 
 enum Dtype { Type_int, Type_char, Type_bool, Type_void };
-
+//bool optimize;
 class AST {
   public: 
     virtual void sem() {}
@@ -168,7 +168,8 @@ class AST {
       }
 
       // Optimizer
-      //TheFPM->run(*main);
+      if (optimize)
+        TheFPM->run(*main);
 
       // Print out the IR.
       TheModule->print(llvm::outs(), nullptr);
@@ -749,9 +750,21 @@ class String_const : public AST{
     void printAST(std::ostream &out) const override {
       out << "[string: " << str <<"]"; 
     }
+    std::string removeQuotes(const std::string &input) {
+      // Check if the first and last characters are quotes
+      if (input.length() >= 2 && input.front() == '"' && input.back() == '"') {
+          return input.substr(1, input.length() - 2);  // Remove first and last characters
+      }
+      return input;  // Return as is if no quotes found
+    }
 
   virtual llvm::Value* compile() override{
-    llvm::Value *strValue = Builder.CreateGlobalStringPtr(llvm::StringRef(str), "strconst");
+    
+    std::string str_1(str);
+    std::string str_2 = removeQuotes(str_1);
+    printf("i am here %s",str_2.c_str());
+    llvm::Value *strValue = Builder.CreateGlobalStringPtr(llvm::StringRef(str_2), "strconst");
+    
     if (!strValue)
     {
         //std::string msg = "Error while compiling String_Cosnt: " + c_str(str) + ".";
