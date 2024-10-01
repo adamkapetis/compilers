@@ -1,6 +1,5 @@
-or and char div do else fun if int mod not nothing or ref return then var while
-hello world AND $$
-512345678 0020
-'A' '1'  '\n' '\t' '\r' '\0' '\\' '\'' '\"' '\xa5' 
-+ - % * = # < <= >=
-( )[ ] { } , ; : <-
+fun main () : nothing
+    var a : int ;
+    {
+        a <- - 5;
+    }

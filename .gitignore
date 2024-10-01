@@ -5,3 +5,4 @@ parser/lexer.cpp
 parser/parser.output
 parser/lexer.o
 parser/gracecomp
+programs-erroneous/

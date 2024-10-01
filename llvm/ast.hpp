@@ -685,6 +685,9 @@ class Exprc : public AST {
       }
       return t;
     }
+    std::vector<Expr *> getExpr() {
+      return exprc;
+    }
   private:
     std::vector<Expr *> exprc;
 };
@@ -732,6 +735,36 @@ class Func_call : public Expr , public Stmt{
       //lookup sto st gia to Tid->name();
       }
       printf(" valid function call\n");
+    }
+
+    virtual llvm::Value * compile() override {
+      std::string name = std::string(Tid->name());
+      llvm::Function *Fcall = TheModule->getFunction(name);
+      if (!Fcall) {
+          std::string msg = "Function call for unknown fucntion: " + name;
+          return Expr::LogErrorV(msg.c_str());
+      }
+      std::vector<Expr *> Args = (exprc) ? exprc->getExpr() : std::vector<Expr *>{};
+      std::vector<llvm::Value *> ArgsV;
+
+      // isos baloume kati gia stack gia na to sindesoume
+      // if (!isTopLevel(mangled_name))
+      // {
+      //     ref.push_back(true);
+      //     llvm::Value *stackFrameAddr = getStackFrameAddr(callee_depth, caller_depth);
+      //     ArgsV.push_back(stackFrameAddr);
+      // }
+
+      for (auto arg : Args) 
+      {
+          llvm::Value *expr = arg->compile();
+          ArgsV.push_back(expr);
+          if (!ArgsV.back())
+              return nullptr;
+      }
+      //girnas ena call piso
+      Builder.CreateCall(Fcall, ArgsV);
+      return nullptr;
     }
   private:
     Id* Tid;
@@ -992,12 +1025,14 @@ class BinOp : public Expr {
       set_type(Type_int);
     }
     virtual llvm::Value* compile() override {
+      std::string str_op;
+
       llvm::Value *L = exprl->compile();
       llvm::Value *R = exprr->compile();
 
       if(!L || !R)
           return nullptr;
-      std::string str_op;
+      
 
       if(op_s == nullptr) {
         //std::string str_op = std::string(op);
@@ -1027,6 +1062,34 @@ class BinOp : public Expr {
     char op;
     char* op_s=nullptr;
 };
+  
+class UniOp : public Expr {
+  public:
+    UniOp(char s, Expr *e): op(s), exprr(e) {}
+    void printAST(std::ostream &out) const override {
+      out << op << "(" << *exprr << ")";
+    }
+    void sem() override {
+    exprr->sem();
+    exprr->check_type(Type_int);
+    set_type(Type_int);
+    }
+    virtual llvm::Value* compile() override {
+      llvm::Value* R = exprr->compile();
+      std::string op_str;
+      op_str.push_back(op);
+      if(op_str == "+")
+          return R;
+      else if (op_str == "-")
+          return Builder.CreateNeg(R, "unarytemp");
+      else
+          return nullptr;
+    }
+  private:
+    char op;
+    Expr *exprr;
+};
+
 
 // class Cond : public AST{
 //   public:

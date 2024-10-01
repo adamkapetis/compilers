@@ -1,5 +1,6 @@
 fun main () : nothing
     fun hello (g, a : int; r : char) : int {
+        g <- 2;
         return 5;
     }
 var changed : int;
@@ -7,8 +8,9 @@ var adam : char;
 var a : int[5];
 var d : int;
 {
-    d <- 5;
+    d <- + 5;
     changed <- d + 1;
     adam <- 'a';
+    hello(d, 2, 'a');
     
 }

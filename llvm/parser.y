@@ -198,8 +198,8 @@ expr:
 |   l_value             { $$=$1; }//{ $$=new L_value(); }
 |   '(' expr ')'        { $$ = $2;  }
 |   func_call           { $$ = $1;  }
-|   '+' expr            { $$ = new BinOp($2,$1); }
-|   '-' expr            { $$ = new BinOp($2,$1); }
+|   '+' expr            { $$ = new UniOp($1, $2); }
+|   '-' expr            { $$ = new UniOp($1, $2); }
 | expr '+' expr         { $$ = new BinOp($1, $2, $3); /*$$->sem();*/ }
 | expr '-' expr         { $$ = new BinOp($1, $2, $3);  }
 | expr '*' expr         { $$ = new BinOp($1, $2, $3);  }

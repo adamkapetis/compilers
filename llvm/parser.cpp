@@ -1535,13 +1535,13 @@ yyreduce:
 
   case 50: /* expr: '+' expr  */
 #line 201 "parser.y"
-                        { (yyval.expr) = new BinOp((yyvsp[0].expr),(yyvsp[-1].op)); }
+                        { (yyval.expr) = new UniOp((yyvsp[-1].op), (yyvsp[0].expr)); }
 #line 1540 "parser.cpp"
     break;
 
   case 51: /* expr: '-' expr  */
 #line 202 "parser.y"
-                        { (yyval.expr) = new BinOp((yyvsp[0].expr),(yyvsp[-1].op)); }
+                        { (yyval.expr) = new UniOp((yyvsp[-1].op), (yyvsp[0].expr)); }
 #line 1546 "parser.cpp"
     break;
 
