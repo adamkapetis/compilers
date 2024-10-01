@@ -1,0 +1,11 @@
+fun main():nothing 
+    var x:int;
+    var y:int;
+    fun plus(y:int):int 
+        {
+            y<-y+1;
+        }
+    {
+        y<-2;
+        x<-plus(y);
+    }

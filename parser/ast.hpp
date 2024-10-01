@@ -337,8 +337,10 @@ class Func_call : public Expr , public Stmt{
 
         // }
         }
+
       //lookup sto st gia to Tid->name();
       }
+      this->set_type(func->fun->type);
       printf(" valid function call\n");
     }
   private:
@@ -403,7 +405,7 @@ class L_value : public Expr {
           set_typedims(new Type(val->var->type->basic_type(),d));
         }
         //set_type(val->var->type->basic_type());
-        std::cout<< "succesful varibale " << c << *(this->expr_type()) <<"lookup \n";
+        std::cout<< "succesful varibale " << c << *(this->expr_type()) <<" lookup "<<std::endl;
       }
       //printf("l_value sem\n");
     }
@@ -575,6 +577,9 @@ class Id_list : public Local_def{
     Id_list(){}
     void append(Id* id){
       Idlist.push_back(id);
+    }
+    void append_front(Id* id){
+      Idlist.insert(Idlist.begin(),id);
     }
     void id_type(Type* t){
       for( const auto &s : Idlist){
@@ -753,7 +758,9 @@ class Valuation : public Stmt {
       printf("starting valuation\n");
       expr->sem();
       var->sem();
-      var->check_type(expr->expr_btype());
+      //std::cout << " left part has type "<< *(var->expr_type())<<std::endl;
+      std::cout<< " left part has type " <<  *(var->expr_type()) << " and right part has type " << *(expr->expr_type())<< std::endl ;
+      //var->check_type(expr->expr_btype());
       printf("valuation sem\n");
     }
   private: 

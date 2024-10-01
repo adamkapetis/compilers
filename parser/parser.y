@@ -124,8 +124,8 @@ fd: fpar_def                                { $$=new Fpar_list($1); }
 
 
 fpar_def:       
-    "ref" T_id td ':' fpar_type             { $3->append(new Id($2));$$=new Fpar_def($3,$5,true); }
-|   T_id td ':' fpar_type                   { $2->append(new Id($1));$$=new Fpar_def($2,$4); }
+    "ref" T_id td ':' fpar_type             { $3->append_front(new Id($2));$$=new Fpar_def($3,$5,true); }
+|   T_id td ':' fpar_type                   { $2->append_front(new Id($1));$$=new Fpar_def($2,$4); }
 ;       
 td: /*nothing */                            { /*std::cout<<"No new id on list\n" ;*/$$=new Id_list(); }
 |  td  ',' T_id                             { /*std::cout<<"new id on list\n"    ;*/$1->append(new Id($3));$$=$1; }
@@ -155,7 +155,7 @@ local_def:
 ;
    
 var_def:
-    "var" T_id td ':' type ';'              { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/$3->append(new Id($2));$$=new Var_def($3,$5);/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
+    "var" T_id td ':' type ';'              { /*std::cout <<"printing a variable: "<<$1 << $2 ;*/$3->append_front(new Id($2));$$=new Var_def($3,$5);/*std::cout << "AST: " << *$$ <<" type "<< *$5 << std::endl;*/ }
 ;
 stmt:
     ';'                                     { $$=new End();}
