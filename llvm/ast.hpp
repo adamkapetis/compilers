@@ -1530,7 +1530,24 @@ class Function : public L_def {
         ds->append(0);
         st.insert_args("strlen",new Type(Type_char,ds));
         st.stopfunc();
-
+        st.insertf("strcmp",Type_int);
+        Dims *ds1 =new Dims();
+        ds->append(0);
+        st.insert_args("strlen",new Type(Type_char,ds));
+        st.insert_args("strlen",new Type(Type_char,ds));
+        st.stopfunc();
+        st.insertf("strcpy",Type_void);
+        Dims *ds2 =new Dims();
+        ds->append(0);
+        st.insert_args("strcpy",new Type(Type_char,ds));
+        st.insert_args("strcpy",new Type(Type_char,ds));
+        st.stopfunc();
+        st.insertf("strcat",Type_void);
+        Dims *ds3 =new Dims();
+        ds->append(0);
+        st.insert_args("strcat",new Type(Type_char,ds));
+        st.insert_args("strcat",new Type(Type_char,ds));
+        st.stopfunc();
       }
       header->namesem(); 
       //printf("header->sem\n");
