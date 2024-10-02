@@ -734,7 +734,7 @@ class Func_call : public Expr , public Stmt{
       // }
 
       for (auto arg : Args) 
-      {
+      {   
           llvm::Value *expr = arg->compile();
           ArgsV.push_back(expr);
           if (!ArgsV.back())
@@ -768,7 +768,6 @@ class String_const : public AST{
     
     std::string str_1(str);
     std::string str_2 = removeQuotes(str_1);
-    printf("i am here %s",str_2.c_str());
     llvm::Value *strValue = Builder.CreateGlobalStringPtr(llvm::StringRef(str_2), "strconst");
     
     if (!strValue)
@@ -1522,6 +1521,16 @@ class Function : public L_def {
         st.stopfunc();
         st.insertf("readChar",Type_char);
         st.stopfunc();
+        // theloume kai gia ascii chr strlen strcmp strcpy strcat
+        st.insertf("ascii",Type_int);
+        st.insert_args("ascii",new Type(Type_char,new Dims()));
+        st.stopfunc();
+        st.insertf("strlen",Type_int);
+        Dims *ds =new Dims();
+        ds->append(0);
+        st.insert_args("strlen",new Type(Type_char,ds));
+        st.stopfunc();
+
       }
       header->namesem(); 
       //printf("header->sem\n");

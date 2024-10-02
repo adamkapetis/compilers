@@ -1,5 +1,8 @@
 fun hello () : nothing 
+var i : int;
 {
-   writeString("Hello world! \n ");
+   writeString("Hello world! hey\\n ");
    $writeInteger(1);
+   i <- strlen("Hello world");
+   writeInteger(i);
 }

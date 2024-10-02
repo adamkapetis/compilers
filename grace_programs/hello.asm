@@ -10,6 +10,10 @@ hello:                                  # @hello
 	.cfi_def_cfa_offset 16
 	movl	$.Lstrconst, %edi
 	callq	writeString@PLT
+	movl	$.Lstrconst.1, %edi
+	callq	strlen@PLT
+	movq	(%rsp), %rdi
+	callq	writeInteger@PLT
 	popq	%rax
 	.cfi_def_cfa_offset 8
 	retq
@@ -37,7 +41,12 @@ main:                                   # @main
 	.type	.Lstrconst,@object              # @strconst
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .Lstrconst:
-	.asciz	"Hello world! \\n "
-	.size	.Lstrconst, 17
+	.asciz	"Hello world! hey\\\\n "
+	.size	.Lstrconst, 21
+
+	.type	.Lstrconst.1,@object            # @strconst.1
+.Lstrconst.1:
+	.asciz	"Hello world"
+	.size	.Lstrconst.1, 12
 
 	.section	".note.GNU-stack","",@progbits

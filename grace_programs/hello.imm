@@ -1,7 +1,8 @@
 ; ModuleID = 'grace program'
 source_filename = "grace program"
 
-@strconst = private unnamed_addr constant [17 x i8] c"Hello world! \\n \00", align 1
+@strconst = private unnamed_addr constant [21 x i8] c"Hello world! hey\\\\n \00", align 1
+@strconst.1 = private unnamed_addr constant [12 x i8] c"Hello world\00", align 1
 
 declare void @writeInteger(i64)
 
@@ -29,7 +30,11 @@ declare void @strcat(ptr, ptr)
 
 define void @hello() {
 entry:
+  %i = alloca i64, align 8
   call void @writeString(ptr @strconst)
+  %0 = call i32 @strlen(ptr @strconst.1)
+  %1 = load i64, ptr %i, align 4
+  call void @writeInteger(i64 %1)
   ret void
 }
 
