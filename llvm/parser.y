@@ -278,8 +278,6 @@ int main(int argc, char** argv) {
     intermediate = result["intermediate"].as<bool>();
 
     if(result["final"].as<bool>()) {
-        /* yyparse();
-        AST::compile_to_asm(); */
         exit(0);
     }
 

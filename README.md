@@ -68,3 +68,21 @@ A .out file will be created and you can run it with:
 ```shell
     ./run.sh hello
 ```
+
+#### Grace Options:
+To see all compiler options available run the following command:
+```shell
+    ./gracec -h
+```
+This will print the compiler options:
+```
+Compiler for the Grace Language
+Usage:
+  Gracec [OPTION...] positional parameters
+
+  -o, --optimize      Optimize code
+  -f, --final         Print final code
+  -i, --intermediate  Print intermediade representation
+  -h, --help          Show this help message
+```
+
