@@ -19,3 +19,8 @@ llvm/parser.o
 llvm/ast.o
 
 llvm/*.o
+llvm/gracec
+llvm/parser.cpp
+llvm/parser.hpp
+llvm/lexer.cpp
+llvm/parser.output
