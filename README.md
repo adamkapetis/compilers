@@ -34,7 +34,7 @@ When creating the Makefile don't nail your parameters. Use `llvm-config` so that
 ```
 
 To test that everything runs use `make` and then:
-``` ./gracec ../grace_programs/hanoi.grc```
+``` ./gracec ../grace_programs/hello.grc```
 
 ### Run time Libray
 You have to go to llvm/lib and run `make` and then take the libgrc.a file and put it in the main llvm folder. 
@@ -56,3 +56,15 @@ A .out file will be created and you can run it with:
     ./test.out
 ```
 
+- For example to run the `hello.grc`:
+```shell
+    # Inside the llvm directory:
+    ./gracec ../grace_programs/hello.grc
+    # Inside the grace_programs directory:
+    clang hello.asm ../llvm/libgrc.a -no-pie -o hello.out
+    ./hello.out
+```
+- Or use our run.sh script:
+```shell
+    ./run.sh hello
+```

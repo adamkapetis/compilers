@@ -15,6 +15,7 @@
 #define YYDEBUG 1
 SymbolTable st;
 bool optimize;
+bool intermediate;
 
 %}
 
@@ -112,7 +113,7 @@ bool optimize;
 program: 
     func_def	                            { std::cout << "AST : " << *$1 << std::endl ;
                                                     $1->sem(); 
-                                                    $1->llvm_compile_and_dump(optimize);
+                                                    $1->llvm_compile_and_dump(optimize, intermediate);
                                             }
 ;
 ld:                                         { $$=new Def_list(); }
@@ -242,6 +243,7 @@ void yyerror(const char *msg) {
 int main(int argc, char** argv) {
     //fill_names();
     optimize = false;
+    intermediate = false;
     cxxopts::Options options("Gracec", "Compiler for the Grace Language");
 
     options.add_options()
@@ -273,18 +275,13 @@ int main(int argc, char** argv) {
 
     optimize = result["optimize"].as<bool>();
 
+    intermediate = result["intermediate"].as<bool>();
+
     if(result["final"].as<bool>()) {
         /* yyparse();
         AST::compile_to_asm(); */
         exit(0);
     }
-
-    if(result["intermediate"].as<bool>()) {
-        yyparse();
-        AST::TheModule->print(llvm::outs(), nullptr);
-        exit(0);
-    }
-
 
     std::string filename;
     if(result.count("filename")) {
@@ -313,7 +310,7 @@ int main(int argc, char** argv) {
 
         yyparse();
         file.close();
-
+        
         std::error_code error;
         llvm::raw_fd_ostream _imm(title + ".imm", error);
         if(!error) {

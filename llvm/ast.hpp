@@ -82,7 +82,7 @@ class AST {
           }
       }     
 
-    void llvm_compile_and_dump(bool optimize=true) {
+    void llvm_compile_and_dump(bool optimize=true, bool intermediate=false) {
       // Initialize
       TheModule = std::make_unique<llvm::Module>("grace program", TheContext);
       // Function Pass Manager (for optimizing)
@@ -172,7 +172,8 @@ class AST {
         TheFPM->run(*main);
 
       // Print out the IR.
-      TheModule->print(llvm::outs(), nullptr);
+      if(intermediate)
+        TheModule->print(llvm::outs(), nullptr);
       
 
 
