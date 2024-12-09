@@ -111,7 +111,7 @@ class AST {
       llvm::FunctionType *writeChar_type =llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {i8}, false);
       TheWriteChar = llvm::Function::Create(writeChar_type, llvm::Function::ExternalLinkage, "writeChar", TheModule.get());
 
-      llvm::FunctionType *readInteger_type =llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), {}, false);
+      llvm::FunctionType *readInteger_type =llvm::FunctionType::get(llvm::Type::getInt64Ty(TheContext), {}, false);
       TheReadInteger = llvm::Function::Create(readInteger_type, llvm::Function::ExternalLinkage, "readInteger", TheModule.get());
 
       llvm::FunctionType *readChar_type =llvm::FunctionType::get(llvm::Type::getInt8Ty(TheContext), {}, false);
@@ -120,16 +120,16 @@ class AST {
       llvm::FunctionType *readString_type =llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {i64, llvm::PointerType::get(i8, 0)}, false);
       TheReadString = llvm::Function::Create(readString_type, llvm::Function::ExternalLinkage, "readString", TheModule.get());
 
-      llvm::FunctionType *ascii_type =llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), {i8}, false);
+      llvm::FunctionType *ascii_type =llvm::FunctionType::get(llvm::Type::getInt64Ty(TheContext), {i8}, false);
       TheAscii = llvm::Function::Create(ascii_type, llvm::Function::ExternalLinkage, "ascii", TheModule.get());
 
       llvm::FunctionType *chr_type =llvm::FunctionType::get(llvm::Type::getInt8Ty(TheContext), {i64}, false);
       TheChr = llvm::Function::Create(chr_type, llvm::Function::ExternalLinkage, "chr", TheModule.get());
 
-      llvm::FunctionType *strlen_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), {llvm::PointerType::get(i8, 0)}, false);
+      llvm::FunctionType *strlen_type = llvm::FunctionType::get(llvm::Type::getInt64Ty(TheContext), {llvm::PointerType::get(i8, 0)}, false);
       TheStrlen = llvm::Function::Create(strlen_type, llvm::Function::ExternalLinkage, "strlen", TheModule.get());
 
-      llvm::FunctionType *strcmp_type = llvm::FunctionType::get(llvm::Type::getInt32Ty(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
+      llvm::FunctionType *strcmp_type = llvm::FunctionType::get(llvm::Type::getInt64Ty(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
       TheStrcmp = llvm::Function::Create(strcmp_type, llvm::Function::ExternalLinkage, "strcmp", TheModule.get());
 
       llvm::FunctionType *strcpy_type = llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {llvm::PointerType::get(i8, 0), llvm::PointerType::get(i8, 0)}, false);
@@ -733,9 +733,10 @@ class Func_call : public Expr , public Stmt{
       //     ArgsV.push_back(stackFrameAddr);
       // }
 
-      for (auto arg : Args) 
+      //for (auto arg : Args) 
+      for(auto arg =Args.rbegin(); arg!=Args.rend(); ++arg)
       {   
-          llvm::Value *expr = arg->compile();
+          llvm::Value *expr = (*arg)->compile();
           ArgsV.push_back(expr);
           if (!ArgsV.back())
               return nullptr;

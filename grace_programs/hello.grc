@@ -1,8 +1,18 @@
 fun hello () : nothing 
-var i : int;
+var q : int;
+fun add (i, j : int) : int {
+      writeInteger(i);
+      j <- i + 1;
+      writeInteger(j);
+      return j;
+   }
 {
-   writeString("Hello world! hey\\n ");
-   $writeInteger(1);
-   i <- strlen("Hello world");
-   writeInteger(i);
+   add(1, 2);
+   $q <-1;
+   $writeString("Hello world! hey\\n ");
+   writeChar('a');
+   writeInteger(q);
+
+   $i <- strlen("Hello world");
+   $writeInteger(i);
 }

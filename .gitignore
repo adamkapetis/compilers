@@ -6,3 +6,16 @@ parser/parser.output
 parser/lexer.o
 parser/gracecomp
 programs-erroneous/
+
+*.imm
+*.asm
+*.out
+grace_programs/*.imm
+grace_programs/*.asm
+grace_programs/*.out
+
+llvm//lexer.o
+llvm/parser.o
+llvm/ast.o
+
+llvm/*.o
