@@ -756,7 +756,7 @@ class String_const : public AST{
   public: 
     String_const(char* c) : str(c){}
     void printAST(std::ostream &out) const override {
-      out << "[string: " << str <<"]"; 
+      out << "[string: " << str <<"]" << "with length" << strlen(str); 
     }
     std::string removeQuotes(const std::string &input) {
       // Check if the first and last characters are quotes
@@ -1534,19 +1534,16 @@ class Function : public L_def {
         st.stopfunc();
         st.insertf("strcmp",Type_int);
         Dims *ds1 =new Dims();
-        ds->append(0);
-        st.insert_args("strlen",new Type(Type_char,ds));
-        st.insert_args("strlen",new Type(Type_char,ds));
+        st.insert_args("strcmp",new Type(Type_char,ds));
+        st.insert_args("strcmp",new Type(Type_char,ds));
         st.stopfunc();
         st.insertf("strcpy",Type_void);
         Dims *ds2 =new Dims();
-        ds->append(0);
         st.insert_args("strcpy",new Type(Type_char,ds));
         st.insert_args("strcpy",new Type(Type_char,ds));
         st.stopfunc();
         st.insertf("strcat",Type_void);
         Dims *ds3 =new Dims();
-        ds->append(0);
         st.insert_args("strcat",new Type(Type_char,ds));
         st.insert_args("strcat",new Type(Type_char,ds));
         st.stopfunc();

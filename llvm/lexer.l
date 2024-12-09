@@ -56,7 +56,7 @@ DOLLAR [^\$]
 {L}({L}|{D}|\_)*                                           {if(newline){newline=false;start=yytext;}/*printf("T_id lexeme=\"%s \" of length %d\n", yytext,length(yytext));*/yylval.id=(char*)malloc(strlen(yytext)+1);strcpy(yylval.id,yytext);return T_id; }
 {D}+                                                       {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.num = atoi(yytext); return T_int_const; }
 \'({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")\'      {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.var = yytext[1]; return T_char_const; } 
-\"({COMMON}|\\x{HEX}|\\n|\\r|\\t|\\0|\\\\|\\'|\\\")+\"     {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.str = (char*)malloc(strlen(yytext)+1);strcpy(yylval.str,yytext); return T_string_const;}
+\"(\\n|\\x{HEX}|\\r|\\t|\\0|\\'|\\\"|{COMMON})+\"     {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.str = (char*)malloc(strlen(yytext)+1);strcpy(yylval.str,yytext); return T_string_const;}
 \<\-                                                       {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.div_s = (char*)malloc(strlen(yytext)+1);strcpy(yylval.div_s,yytext); return T_arrow;}
 [\(\)\{\}\[\]\,\;\:]                                       {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);yylval.div = yytext[0];*/ return yytext[0];}
 \<\=                                                       {if(newline){newline=false;start=yytext;}/*printf("lexeme=\"%s\"\n", yytext);*/yylval.op_s = (char*)malloc(strlen(yytext)+1);strcpy(yylval.op_s,yytext); return T_lesseq; }
